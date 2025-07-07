@@ -45,4 +45,20 @@ class User(AbstractUser):
     objects = UserManager()
 
 
-# Create your models here.
+class SexChoices(models.TextChoices):
+    MALE = "male", "Male"
+    FEMALE = "female", "Female"
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    phone_number = models.CharField(max_length=20, blank=True)
+    birth_date = models.DateField(null=True, blank=True)
+    sex = models.CharField(max_length=10, choices=SexChoices, null=True, blank=True)
+
+    def __str__(self):
+        return f"Profile of {self.user.email}"
+
+    class Meta:
+        verbose_name = "User Profile"
+        verbose_name_plural = "User Profiles"
