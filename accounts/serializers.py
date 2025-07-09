@@ -1,6 +1,22 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from dr_reminder_api import settings
+
+
+def validate_password_complexity(password: str) -> str:
+    if not any(char.isupper() for char in password):
+        raise serializers.ValidationError("Password must contain at least one uppercase character.")
+    if not any(char.islower() for char in password):
+        raise serializers.ValidationError("Password must contain at least one lowercase character.")
+    if not any(char.isdigit() for char in password):
+        raise serializers.ValidationError("Password must contain at least one digit.")
+    if not any(char in "!@#$%^&*()_+-=[]{}|;:,.<>?/\\\"'" for char in password):
+        raise serializers.ValidationError("Password must contain at least one special character.")
+    if any(ord(char) < 32 for char in password):
+        raise serializers.ValidationError("Password must not contain non-printing characters.")
+    return password
+
 
 class UserSerializer(serializers.ModelSerializer):
     repeat_password = serializers.CharField(write_only=True)
