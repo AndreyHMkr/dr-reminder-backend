@@ -55,6 +55,7 @@ class UserSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs["password"] != attrs["repeat_password"]:
             raise serializers.ValidationError("Passwords don't match")
+        validate_password_complexity(attrs["password"])
         return attrs
 
     def validate_password(self, value):
