@@ -19,7 +19,7 @@ def validate_password_complexity(password: str) -> str:
 
 
 class UserSerializer(serializers.ModelSerializer):
-    repeat_password = serializers.CharField(write_only=True)
+    repeat_password = serializers.CharField(write_only=True, style={'input_type': 'password'})
 
     class Meta:
         model = get_user_model()
@@ -30,6 +30,7 @@ class UserSerializer(serializers.ModelSerializer):
                 "write_only": True,
                 "min_length": 8,
                 "max_length": 30,
+                "style": {"input_type": "password"},
             },
         }
 
