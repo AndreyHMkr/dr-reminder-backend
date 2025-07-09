@@ -1,5 +1,8 @@
-from rest_framework import generics
-from accounts.serializers import UserSerializer
+from rest_framework import generics, status
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+
+from accounts.serializers import UserSerializer, ResetPasswordSerializer, ResetPasswordConfirmSerializer
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -17,3 +20,12 @@ class ResetPasswordView(generics.GenericAPIView):
         return Response({"detail": "Password reset email sent."}, status=status.HTTP_200_OK)
 
 
+class ResetPasswordConfirmView(generics.GenericAPIView):
+    serializer_class = ResetPasswordConfirmSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)
