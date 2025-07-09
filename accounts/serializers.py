@@ -34,6 +34,24 @@ class UserSerializer(serializers.ModelSerializer):
             },
         }
 
+    def validate_email(self, email: str) -> str:
+        if not (12 <= len(email) <= 72):
+            raise serializers.ValidationError("Email must be between 12 and 72 characters.")
+        if "@" not in email or "." not in email.split("@")[-1]:
+            raise serializers.ValidationError("Enter a valid email address.")
+
+        name_part = email.split("@")[0]
+        allowed_chars = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._+-")
+        if not all(char in allowed_chars for char in name_part):
+            raise serializers.ValidationError(
+                "Email name part can only contain letters, digits, '.', '_', '+', '-' characters."
+            )
+
+        if get_user_model().objects.filter(email=email).exists():
+            raise serializers.ValidationError("This email is already registered.")
+
+        return email
+
     def validate(self, attrs):
         if attrs["password"] != attrs["repeat_password"]:
             raise serializers.ValidationError("Passwords don't match")
