@@ -5,6 +5,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from jwt.utils import force_bytes
 from rest_framework import serializers
 
+from accounts.models import UserProfile
 from dr_reminder_api import settings
 
 
@@ -76,6 +77,37 @@ class UserSerializer(serializers.ModelSerializer):
             user.save()
 
         return user
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=False)
+
+    class Meta:
+        model = UserProfile
+        fields = (
+            "username",
+            "phone_number",
+            "birth_date",
+            "sex",
+        )
+
+    def update(self, instance, validated_data):
+        user_date = validated_data.pop("user", {})
+        if "username" in user_date:
+            instance.username = user_date["username"]
+            instance.user.save()
+
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        instance.save()
+        return instance
+
+    def create(self, validated_data):
+        user_date = validated_data.pop("user")
+        user = self.context["request"].user
+        user.username = user_date.username or user.username
+        user.save()
+        return UserProfile.objects.create(user=user, **validated_data)
 
 
 class ResetPasswordSerializer(serializers.Serializer):
