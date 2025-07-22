@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -31,3 +32,17 @@ class Speciality(models.Model):
 
     def __str__(self):
         return self.name
+
+class Event(models.Model):
+    class EventType(models.TextChoices):
+        VISIT = "visit", "Visit"
+        VACCINATION = "vaccination", "Vaccination"
+        ANALYSIS = "analysis", "Analysis"
+        BLOOD_DONATION = "blood donation", "Blood donation"
+        MEDICATION = "medication", "Medication"
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="events")
+    name = models.CharField(max_length=255)
+    type = models.CharField(max_length=50, choices=EventType.choices)
+    created_at = models.DateTimeField(auto_now_add=True)
+    speciality = models.ForeignKey(Speciality, on_delete=models.SET_NULL, null=True, blank=True)
+    date = models.DateTimeField(null=True, blank=True)
