@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from services.models import Service
+from services.models import Service, Speciality
 
 
 class ServiceSerializer(serializers.ModelSerializer):
@@ -11,5 +11,15 @@ class ServiceSerializer(serializers.ModelSerializer):
             "title",
             "description",
             "icon",
+            "order"
+        )
+
+class SpecialitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Speciality
+        fields = (
+            "name",
+            "slug",
+            "description",
             "order"
         )
