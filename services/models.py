@@ -63,6 +63,10 @@ class Vaccination(models.Model):
 class AnalysisPackage(models.Model):
     title = models.CharField(max_length=100)
 
+    def __str__(self):
+        return self.title
+
+
 class AnalysisTest(models.Model):
     package = models.ForeignKey(AnalysisPackage, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
