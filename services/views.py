@@ -1,7 +1,6 @@
-from rest_framework import generics, viewsets
-from rest_framework.generics import ListAPIView
+from rest_framework import generics
 from rest_framework.permissions import AllowAny
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 
 from services.models import Service, MedicalSpecialty, Event, Vaccination, AnalysisPackage, AnalysisTest
 from services.serializers import ServiceSerializer, MedicalSpecialtySerializer, EventSerializer, VaccinationSerializer, \
@@ -18,7 +17,7 @@ class MedicalSpecialtyViewSet(ReadOnlyModelViewSet):
     serializer_class = MedicalSpecialtySerializer
     permission_classes = [AllowAny]
 
-class EventViewSet(generics.CreateAPIView):
+class EventViewSet(ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
     permission_classes = [AllowAny]
