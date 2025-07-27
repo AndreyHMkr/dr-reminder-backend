@@ -29,6 +29,9 @@ class MedicalSpecialty(models.Model):
 
 
 class Event(models.Model):
+    class Meta:
+        ordering = ["start_date"]
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     date = models.DateField(null=True, blank=True)
