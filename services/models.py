@@ -56,6 +56,10 @@ class Vaccination(models.Model):
     description = models.TextField()
     vaccine_info = models.TextField()
 
+    def __str__(self):
+        return self.title
+
+
 class AnalysisPackage(models.Model):
     title = models.CharField(max_length=100)
 
