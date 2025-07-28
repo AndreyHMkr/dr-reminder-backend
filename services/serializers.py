@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from services.models import Service, MedicalSpecialty, Event, Vaccination, AnalysisPackage, AnalysisTest
+from services.models import Service, MedicalSpecialty, Event, Vaccination, AnalysisPackage, AnalysisTest, EventType
 
 
 class ServiceSerializer(serializers.ModelSerializer):
@@ -27,15 +27,57 @@ class MedicalSpecialtySerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(serializers.ModelSerializer):
+
+    medical_specialty = serializers.SlugRelatedField(
+        slug_field='title',
+        queryset=MedicalSpecialty.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    vaccination = serializers.SlugRelatedField(
+        slug_field='title',
+        queryset=Vaccination.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    analysis_test = serializers.SlugRelatedField(
+        slug_field='title',
+        queryset=AnalysisTest.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    blood_donation = serializers.BooleanField(required=False)
+    event_type = serializers.ChoiceField(choices=EventType.choices, read_only=True)
+
     class Meta:
         model = Event
         fields = (
             "id",
             "name",
-            "date",
+            "short_description",
+            "start_date",
+            "start_time",
+            "medical_specialty",
+            "vaccination",
+            "analysis_test",
+            "blood_donation",
+            "event_type",
             "created_at"
         )
-        read_only_fields = ("id", "created_at")
+        read_only_fields = ("id", "name", "event_type", "created_at")
+
+    def validate(self, attrs):
+        types_selected = [
+            bool(attrs.get("medical_specialty")),
+            bool(attrs.get("vaccination")),
+            bool(attrs.get("analysis_test")),
+            bool(attrs.get("blood_donation")),
+        ]
+        if sum(types_selected) != 1:
+            raise serializers.ValidationError(
+                "Only one of the fields [specialty, vaccination, test, donation] is allowed."
+            )
+        return attrs
 
 
 class VaccinationSerializer(serializers.ModelSerializer):
