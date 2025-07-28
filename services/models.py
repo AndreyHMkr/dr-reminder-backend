@@ -28,6 +28,14 @@ class MedicalSpecialty(models.Model):
         return self.title
 
 
+class EventType(models.TextChoices):
+    VACCINATION = "vaccination", "Vaccination"
+    ANALYSIS = "analysis", "Analysis"
+    BLOOD_DONATION = "blood donation", "Blood Donation"
+    OTHER = "other", "Other"
+    VISIT = "visit", "Visit"
+
+
 class Event(models.Model):
     class Meta:
         ordering = ["start_date"]
