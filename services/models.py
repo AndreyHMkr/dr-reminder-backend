@@ -1,6 +1,6 @@
 from django.db import models
 
-from dr_reminder_api import settings
+from django.conf import settings
 
 
 class Service(models.Model):
