@@ -42,22 +42,32 @@ class Event(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
-    date = models.DateField(null=True, blank=True)
+    short_description = models.TextField(blank=True)
+    start_date = models.DateField()
+    start_time = models.TimeField()
     medical_specialty = models.ForeignKey("MedicalSpecialty", null=True, blank=True, on_delete=models.SET_NULL)
     vaccination = models.ForeignKey("Vaccination", null=True, blank=True, on_delete=models.SET_NULL)
     analysis_test = models.ForeignKey("AnalysisTest", null=True, blank=True, on_delete=models.SET_NULL)
     blood_donation = models.BooleanField(default=False)
+    event_type = models.CharField(max_length=20, choices=EventType.choices, default=EventType.OTHER)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
         if self.medical_specialty:
             self.name = f"Visit to {self.medical_specialty.title}"
+            self.event_type = EventType.VISIT
         elif self.vaccination:
             self.name = f"Vaccination against {self.vaccination.title}"
+            self.event_type = EventType.VACCINATION
         elif self.analysis_test:
             self.name = self.analysis_test.title
+            self.event_type = EventType.ANALYSIS
         elif self.blood_donation:
             self.name = "Blood donation"
+            self.event_type = EventType.BLOOD_DONATION
+        else:
+            self.name = "Other"
+            self.event_type = EventType.OTHER
         super().save(*args, **kwargs)
 
 
