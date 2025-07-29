@@ -1,4 +1,5 @@
 from debug_toolbar.toolbar import debug_toolbar_urls
+from django.http import JsonResponse
 from django.urls import path
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -7,7 +8,13 @@ from rest_framework_simplejwt.views import (
 )
 from accounts.views import CreateUserView, ResetPasswordView, ResetPasswordConfirmView, UserProfileView, LogoutView
 
+
+def accounts_root(request):
+    return JsonResponse({"message": "Accounts API root"})
+
+
 urlpatterns = [
+                  path("", accounts_root),
                   path("register/", CreateUserView.as_view(), name="register"),
                   path("login/", TokenObtainPairView.as_view(), name="login"),
                   path("logout/", LogoutView.as_view(), name="logout"),
