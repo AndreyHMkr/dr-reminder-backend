@@ -1,5 +1,22 @@
 [
-
+{
+    "model": "accounts.user",
+    "pk": 1,
+    "fields": {
+        "password": "cnjekrnvkj32322fa!@A",
+        "last_login": null,
+        "first_name": "JV",
+        "last_name": "Ffreve",
+        "is_active": true,
+        "date_joined": "2024-01-01T00:00:00Z",
+        "email": "test@gm.com",
+        "is_staff": true,
+        "is_superuser": true,
+        "role": "admin",
+        "groups": [],
+        "user_permissions": []
+    }
+},
 {
     "model": "accounts.user",
     "pk": 2,
@@ -16,6 +33,118 @@
         "role": "user",
         "groups": [],
         "user_permissions": []
+    }
+},
+{
+    "model": "services.service",
+    "pk": 1,
+    "fields": {
+        "title": "Vaccination",
+        "slug": "vaccination",
+        "description": "All types of vaccinations.",
+        "icon": "syringe",
+        "order": 1
+    }
+},
+{
+    "model": "services.service",
+    "pk": 2,
+    "fields": {
+        "title": "Analysis",
+        "slug": "analysis",
+        "description": "Laboratory tests and diagnostics.",
+        "icon": "flask",
+        "order": 2
+    }
+},
+{
+    "model": "services.service",
+    "pk": 3,
+    "fields": {
+        "title": "Consultation",
+        "slug": "consultation",
+        "description": "Consultations with doctors.",
+        "icon": "stethoscope",
+        "order": 3
+    }
+},
+{
+    "model": "services.medicalspecialty",
+    "pk": 1,
+    "fields": {
+        "title": "Cardiology",
+        "slug": "cardiology",
+        "description": "Heart and blood vessels specialist."
+    }
+},
+{
+    "model": "services.medicalspecialty",
+    "pk": 2,
+    "fields": {
+        "title": "Dermatology",
+        "slug": "dermatology",
+        "description": "Skin care and treatment."
+    }
+},
+{
+    "model": "services.vaccination",
+    "pk": 1,
+    "fields": {
+        "title": "Influenza",
+        "slug": "influenza",
+        "description": "Flu vaccination.",
+        "vaccine_info": "Once a year."
+    }
+},
+{
+    "model": "services.vaccination",
+    "pk": 2,
+    "fields": {
+        "title": "COVID-19",
+        "slug": "covid-19",
+        "description": "Coronavirus vaccine.",
+        "vaccine_info": "Primary + booster doses."
+    }
+},
+{
+    "model": "services.analysispackage",
+    "pk": 1,
+    "fields": {
+        "title": "Basic Blood Tests"
+    }
+},
+{
+    "model": "services.analysispackage",
+    "pk": 2,
+    "fields": {
+        "title": "Extended Health Panel"
+    }
+},
+{
+    "model": "services.analysistest",
+    "pk": 1,
+    "fields": {
+        "package": 1,
+        "title": "Hemoglobin",
+        "description": "Red blood cell level."
+    }
+},
+{
+    "model": "services.analysistest",
+    "pk": 2,
+    "fields": {
+        "package": 1,
+        "title": "Cholesterol",
+        "description": "Lipid profile check."
+    }
+},
+{
+    "model": "services.analysistest",
+    "pk": 3,
+    "fields": {
+        "package": 2,
+        "title": "Liver Function",
+        "description": "Check liver enzymes."
     }
 }
 ]
