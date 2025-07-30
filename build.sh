@@ -6,6 +6,6 @@ pip install -r requirements.txt
 
 
 echo "🔄 Applying migrations..."
-python manage.py migrate
+python manage.py migrate && python manage.py collectstatic --noinput
 
 echo "✅ Build complete!"
