@@ -18,8 +18,17 @@ from debug_toolbar.toolbar import debug_toolbar_urls
 # from django.contrib import admin
 from django.urls import path, include
 
+from django.http import JsonResponse
+
+
+def root_view(request):
+    return JsonResponse({"message": "Backend is alive."})
+
+
 urlpatterns = [
-    #    path('admin/', admin.site.urls),
-    path("api/accounts/", include("accounts.urls")),
-    path("api/services/", include("services.urls"))
-] + debug_toolbar_urls()
+                  #    path('admin/', admin.site.urls),
+                  path("api/accounts/", include("accounts.urls")),
+                  path("api/services/", include("services.urls")),
+                  path('', root_view),
+
+              ] + debug_toolbar_urls()
