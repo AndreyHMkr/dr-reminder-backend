@@ -1,9 +1,11 @@
 from rest_framework import generics, status
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from accounts.models import UserProfile
 from accounts.serializers import UserSerializer, ResetPasswordSerializer, ResetPasswordConfirmSerializer, \
     UserProfileSerializer
 
@@ -29,9 +31,19 @@ class LogoutView(APIView):
 class UserProfileView(generics.CreateAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
+    queryset = UserProfile.objects.all()
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+class UserDetailView(generics.RetrieveAPIView):
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        user = self.request.user
+        try:
+            return user.userprofile
+        except UserProfile.DoesNotExist:
+            raise NotFound("User profile does not exist.")
+
 
 
 class ResetPasswordView(generics.GenericAPIView):
