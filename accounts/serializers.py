@@ -80,34 +80,25 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source="user.username", read_only=False)
-
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    username = serializers.CharField()
+    email = serializers.EmailField(read_only=True)
     class Meta:
         model = UserProfile
         fields = (
+            "user",
             "username",
             "phone_number",
+            "email",
             "birth_date",
             "sex",
+            "country",
+            "city",
         )
+    extra_kwargs = {
+        "user": {"write_only": True},
+    }
 
-    def update(self, instance, validated_data):
-        user_date = validated_data.pop("user", {})
-        if "username" in user_date:
-            instance.username = user_date["username"]
-            instance.user.save()
-
-        for key, value in validated_data.items():
-            setattr(instance, key, value)
-        instance.save()
-        return instance
-
-    def create(self, validated_data):
-        user_date = validated_data.pop("user")
-        user = self.context["request"].user
-        user.username = user_date.username or user.username
-        user.save()
-        return UserProfile.objects.create(user=user, **validated_data)
 
 
 class ResetPasswordSerializer(serializers.Serializer):
