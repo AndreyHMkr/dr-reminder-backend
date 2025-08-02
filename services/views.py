@@ -3,7 +3,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 
 from services.models import Service, MedicalSpecialty, Event, Vaccination, AnalysisPackage, AnalysisTest
 from services.serializers import ServiceSerializer, MedicalSpecialtySerializer, EventSerializer, VaccinationSerializer, \
-    AnalysisPackageSerializer, AnalysisTestSerializer
+    AnalysisPackageSerializer, AnalysisTestSerializer, EventRetrySerializer
 
 
 class ServiceViewSet(ReadOnlyModelViewSet):
@@ -21,6 +21,10 @@ class EventViewSet(ModelViewSet):
     serializer_class = EventSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return EventRetrySerializer
+        return EventSerializer
     def get_queryset(self):
         return Event.objects.filter(user=self.request.user)
 
