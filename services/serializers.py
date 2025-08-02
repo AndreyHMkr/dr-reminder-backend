@@ -79,6 +79,24 @@ class EventSerializer(serializers.ModelSerializer):
             )
         return attrs
 
+class EventRetrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Event
+        fields = (
+            "id",
+            "name",
+            "start_date",
+            "start_time",
+            "medical_specialty",
+            "vaccination",
+            "analysis_test",
+            "blood_donation",
+            "event_type",
+            "created_at"
+        )
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        return {key: val for key, val in data.items() if val not in [None, False, "", [], {}]}
 
 class VaccinationSerializer(serializers.ModelSerializer):
     class Meta:
