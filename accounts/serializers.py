@@ -80,6 +80,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    image_profile = serializers.ImageField(required=False, allow_null=True)
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     username = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     email = serializers.EmailField(read_only=True)
