@@ -44,16 +44,13 @@ class TreatmentIntake(models.Model):
 
     def schedule_next_run(self):
         now = timezone.now()
-        start = self.plan.start_date
-        if now < start:
-            next_run = start
-        else:
-            next_run = now.replace(hour=self.time.hour, minute=self.time.minute, second=0, microsecond=0)
-            if next_run < now:
-                next_run += timedelta(days=1)
-
-        self.next_run = next_run
-        self.save()
+        today_dt = timezone.make_aware(
+            datetime.combine(now.date(), self.time),
+            timezone.get_current_timezone()
+        )
+        nxt = today_dt if today_dt >= now else today_dt + timedelta(days=1)
+        self.next_run = nxt
+        self.save(update_fields=['next_run'])
 
 
 class MedicalSpecialty(models.Model):
