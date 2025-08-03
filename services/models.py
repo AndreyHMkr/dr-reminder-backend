@@ -1,4 +1,7 @@
+from datetime import datetime, timedelta, date
+
 from django.db import models
+from django.utils import timezone
 
 from dr_reminder_api import settings
 
@@ -17,6 +20,40 @@ class Service(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class TreatmentPlan(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    name_of_medicine = models.CharField()
+    description = models.TextField()
+    start_date = models.DateTimeField()
+    finish_date = models.DateTimeField()
+
+    class Meta:
+        ordering = ["-id"]
+
+    def __str__(self):
+        return f"{self.name_of_medicine} ({self.user_id})"
+
+
+class TreatmentIntake(models.Model):
+    plan = models.ForeignKey(TreatmentPlan, on_delete=models.CASCADE, related_name="intakes")
+    time = models.TimeField()
+    next_run = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    def schedule_next_run(self):
+        now = timezone.now()
+        start = self.plan.start_date
+        if now < start:
+            next_run = start
+        else:
+            next_run = now.replace(hour=self.time.hour, minute=self.time.minute, second=0, microsecond=0)
+            if next_run < now:
+                next_run += timedelta(days=1)
+
+        self.next_run = next_run
+        self.save()
 
 
 class MedicalSpecialty(models.Model):
@@ -43,8 +80,8 @@ class Event(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     short_description = models.TextField(blank=True)
-    start_date = models.DateField()
-    start_time = models.TimeField()
+    start_date = models.DateField(default=date.today)
+    start_time = models.TimeField(default=datetime.now)
     medical_specialty = models.ForeignKey("MedicalSpecialty", null=True, blank=True, on_delete=models.SET_NULL)
     vaccination = models.ForeignKey("Vaccination", null=True, blank=True, on_delete=models.SET_NULL)
     analysis_test = models.ForeignKey("AnalysisTest", null=True, blank=True, on_delete=models.SET_NULL)
