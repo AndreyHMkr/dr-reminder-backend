@@ -20,8 +20,9 @@ from debug_toolbar.toolbar import debug_toolbar_urls
 from django.urls import path, include
 
 urlpatterns = [
-    #    path('admin/', admin.site.urls),
-    path("api/accounts/", include("accounts.urls")),
-    path("api/services/", include("services.urls")),
-    path("__debug__/", include(debug_toolbar.urls)),
-] + debug_toolbar_urls()
+                  #    path('admin/', admin.site.urls),
+                  path("api/accounts/", include("accounts.urls")),
+                  path("api/services/", include("services.urls")),
+                  path("api/telegram/", include("telegram_notifications.urls")),
+                  path("__debug__/", include(debug_toolbar.urls)),
+              ] + debug_toolbar_urls()
