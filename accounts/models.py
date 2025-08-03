@@ -1,6 +1,9 @@
+import os
+import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.contrib.auth.models import BaseUserManager
+from django.template.defaultfilters import slugify
 
 
 class UserManager(BaseUserManager):
@@ -51,7 +54,16 @@ class SexChoices(models.TextChoices):
     FEMALE = "female", "Female"
 
 
+def create_custom_path(instance, filename):
+    _, extension = os.path.splitext(filename)
+    return os.path.join(
+        "uploads/images/",
+        f"{slugify(instance.title)}-{uuid.uuid4()}{extension}"
+    )
+
+
 class UserProfile(models.Model):
+    image_profile = models.ImageField(upload_to="profile_pics/", null=True, blank=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     username = models.CharField(max_length=100, unique=False, blank=True, null=True)
     phone_number = models.CharField(max_length=20, blank=True)

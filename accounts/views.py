@@ -4,7 +4,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from rest_framework.parsers import MultiPartParser, FormParser
 from accounts.models import UserProfile
 from accounts.serializers import UserSerializer, ResetPasswordSerializer, ResetPasswordConfirmSerializer, \
     UserProfileSerializer
@@ -33,7 +33,9 @@ class UserProfileView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     queryset = UserProfile.objects.all()
 
-class UserDetailView(generics.RetrieveAPIView):
+
+class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
+    parser_classes = (MultiPartParser, FormParser)
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
 
@@ -43,7 +45,6 @@ class UserDetailView(generics.RetrieveAPIView):
             return user.userprofile
         except UserProfile.DoesNotExist:
             raise NotFound("User profile does not exist.")
-
 
 
 class ResetPasswordView(generics.GenericAPIView):

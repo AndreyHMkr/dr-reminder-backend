@@ -16,6 +16,8 @@ load_dotenv()
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", 'django-insecure-bm3^$!9$)$hs3zxnkj=ivz)ijlbyspm6#jrr-#=6t#^g+sw!t1')
 
+MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "/media/"
 # Application definition
 
 INSTALLED_APPS = [
