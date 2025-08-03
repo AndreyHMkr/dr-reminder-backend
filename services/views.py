@@ -1,9 +1,13 @@
+from django.db.models import Prefetch
+from rest_framework import viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 
-from services.models import Service, MedicalSpecialty, Event, Vaccination, AnalysisPackage, AnalysisTest
+from services.models import Service, MedicalSpecialty, Event, Vaccination, AnalysisPackage, AnalysisTest, TreatmentPlan, \
+    TreatmentIntake
 from services.serializers import ServiceSerializer, MedicalSpecialtySerializer, EventSerializer, VaccinationSerializer, \
-    AnalysisPackageSerializer, AnalysisTestSerializer, EventRetrySerializer
+    AnalysisPackageSerializer, AnalysisTestSerializer, EventRetrySerializer, TreatmentPlanCreateSerializer, \
+    TreatmentPlanReadSerializer
 
 
 class ServiceViewSet(ReadOnlyModelViewSet):
@@ -45,3 +49,20 @@ class AnalysisTestViewSet(ReadOnlyModelViewSet):
     queryset = AnalysisTest.objects.all()
     serializer_class = AnalysisTestSerializer
     permission_classes = [AllowAny]
+
+class TreatmentPlanViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return TreatmentPlan.objects.filter(
+            user=self.request.user,
+        ).prefetch_related(
+            Prefetch(
+                "intakes",
+                queryset=TreatmentIntake.objects.order_by("time")
+            )
+        ).order_by("-id")
+    def get_serializer_class(self):
+        if self.action in ("create", "update", "partial_update"):
+            return TreatmentPlanCreateSerializer
+        return TreatmentPlanReadSerializer
