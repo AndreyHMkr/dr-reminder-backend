@@ -182,3 +182,20 @@ class TreatmentPlanCreateSerializer(serializers.ModelSerializer):
 
         return plan
 
+
+class TreatmentPlanReadSerializer(serializers.ModelSerializer):
+    times = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TreatmentPlan
+        fields = (
+            "id",
+            "name_of_medicine",
+            "description",
+            "start_date",
+            "finish_date",
+            "times"
+        )
+
+    def get_times(self, obj):
+        return [i.time.strftime("%H:%M") for i in obj.intakes.all()]
