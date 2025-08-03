@@ -172,7 +172,7 @@ class TreatmentPlanCreateSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        times = validated_data.pop("times")
+        times = validated_data.pop("time_of_taking_medications")
         user = self.context["request"].user
         plan = TreatmentPlan.objects.create(user=user, **validated_data)
 
