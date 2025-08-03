@@ -1,6 +1,8 @@
 from rest_framework import serializers
+from datetime import datetime
 
-from services.models import Service, MedicalSpecialty, Event, Vaccination, AnalysisPackage, AnalysisTest, EventType
+from services.models import Service, MedicalSpecialty, Event, Vaccination, AnalysisPackage, AnalysisTest, EventType, \
+    TreatmentPlan, TreatmentIntake
 
 
 class ServiceSerializer(serializers.ModelSerializer):
@@ -27,7 +29,6 @@ class MedicalSpecialtySerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(serializers.ModelSerializer):
-
     medical_specialty = serializers.SlugRelatedField(
         slug_field='title',
         queryset=MedicalSpecialty.objects.all(),
@@ -79,6 +80,7 @@ class EventSerializer(serializers.ModelSerializer):
             )
         return attrs
 
+
 class EventRetrySerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
@@ -94,9 +96,11 @@ class EventRetrySerializer(serializers.ModelSerializer):
             "event_type",
             "created_at"
         )
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         return {key: val for key, val in data.items() if val not in [None, False, "", [], {}]}
+
 
 class VaccinationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -131,3 +135,50 @@ class AnalysisPackageSerializer(serializers.ModelSerializer):
             "title",
             "test"
         )
+
+
+class TimesCharField(serializers.CharField):
+    def to_internal_value(self, data):
+        if not data:
+            raise serializers.ValidationError("Times cannot be empty.")
+        times = [t.strip() for t in data.split(",") if t.strip()]
+        parsed_times = []
+        for t in times:
+            try:
+                parsed_times.append(datetime.strptime(t, "%H:%M").time())
+            except ValueError:
+                raise serializers.ValidationError(f"Invalid time format: {t}. Use HH:MM.")
+        return parsed_times
+
+
+class TreatmentPlanCreateSerializer(serializers.ModelSerializer):
+    time_of_taking_medications = TimesCharField(write_only=True,
+                                                help_text="Time separated by commas, for example: 08:00, 13:00, 20:00")
+
+    class Meta:
+        model = TreatmentPlan
+        fields = (
+            "id",
+            "name_of_medicine",
+            "description",
+            "start_date",
+            "finish_date",
+            "time_of_taking_medications",
+        )
+
+    def validate(self, attrs):
+        if attrs["start_date"] > attrs["finish_date"]:
+            raise serializers.ValidationError("Start date must be later than finish date.")
+        return attrs
+
+    def create(self, validated_data):
+        times = validated_data.pop("times")
+        user = self.context["request"].user
+        plan = TreatmentPlan.objects.create(user=user, **validated_data)
+
+        for t in times:
+            intake = TreatmentIntake.objects.create(plan=plan, time=t)
+            intake.schedule_next_run()
+
+        return plan
+
