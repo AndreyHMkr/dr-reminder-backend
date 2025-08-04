@@ -31,10 +31,19 @@ INSTALLED_APPS = [
     "debug_toolbar",
     'rest_framework_simplejwt.token_blacklist',
     "corsheaders",
-    "services"
+    "services",
+    "cloudinary",
+    'cloudinary_storage',
 
 ]
 
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+}
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     "corsheaders.middleware.CorsMiddleware",
