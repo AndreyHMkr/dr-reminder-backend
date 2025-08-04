@@ -21,7 +21,6 @@ class MedicalSpecialtyViewSet(ReadOnlyModelViewSet):
     permission_classes = [AllowAny]
 
 class EventViewSet(ModelViewSet):
-    queryset = Event.objects.all()
     serializer_class = EventSerializer
     permission_classes = [IsAuthenticated]
 
