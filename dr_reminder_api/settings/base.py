@@ -5,6 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -35,6 +36,9 @@ INSTALLED_APPS = [
     "cloudinary",
     'cloudinary_storage',
 
+    "telegram_notifications",
+    "django_celery_beat",
+    "services.apps.ServicesConfig"
 ]
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
@@ -142,6 +146,17 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
+CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+CELERY_TIMEZONE = "Europe/Dublin"
+
+CELERY_BEAT_SCHEDULE = {
+    "treatment-intakes-every-minute": {
+        "task": "telegram_notifications.tasks.process_due_treatment_intakes",
+        "schedule": crontab(),
+    },
+}
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",

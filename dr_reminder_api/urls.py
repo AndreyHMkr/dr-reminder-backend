@@ -28,7 +28,9 @@ def root_view(request):
 urlpatterns = [
                   path("api/services/", include("services.urls")),
                   path('', root_view),
-
+                  path("__debug__/", include(debug_toolbar.urls)),
+                  path("api/telegram/", include("telegram_notifications.urls")),
                   path("api/accounts/", include("accounts.urls")),
                   path("__debug__/", include(debug_toolbar.urls)),
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
