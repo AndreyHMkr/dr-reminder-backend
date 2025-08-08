@@ -26,8 +26,8 @@ class TreatmentPlan(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name_of_medicine = models.CharField()
     description = models.TextField()
-    start_date = models.DateTimeField()
-    finish_date = models.DateTimeField()
+    start_date = models.DateField()
+    finish_date = models.DateField()
 
     class Meta:
         ordering = ["-id"]
@@ -45,7 +45,7 @@ class TreatmentIntake(models.Model):
     def schedule_next_run(self):
         now = timezone.now()
         start = self.plan.start_date
-        if now < start:
+        if now.date() < start:
             next_run = start
         else:
             next_run = now.replace(hour=self.time.hour, minute=self.time.minute, second=0, microsecond=0)
