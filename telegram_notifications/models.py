@@ -10,4 +10,4 @@ class TelegramAccount(models.Model):
     linked_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user_id}:{self.chat_id}"
+        return f"{self.user_id}:{self.user.username}{self.chat_id}"

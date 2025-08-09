@@ -28,3 +28,4 @@ DATABASES = {
         "PORT": int(os.environ["POSTGRES_PORT"]),
     }
 }
+print("DATABASES:", DATABASES)

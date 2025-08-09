@@ -5,20 +5,22 @@ from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 
 from services.models import Service, MedicalSpecialty, Event, Vaccination, AnalysisPackage, AnalysisTest, TreatmentPlan, \
     TreatmentIntake
+from services.permissions import IsAdminOrReadOnly
 from services.serializers import ServiceSerializer, MedicalSpecialtySerializer, EventSerializer, VaccinationSerializer, \
     AnalysisPackageSerializer, AnalysisTestSerializer, EventRetrySerializer, TreatmentPlanCreateSerializer, \
     TreatmentPlanReadSerializer
 
 
-class ServiceViewSet(ReadOnlyModelViewSet):
+class ServiceViewSet(ModelViewSet):
     queryset = Service.objects.all()
     serializer_class = ServiceSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminOrReadOnly]
 
-class MedicalSpecialtyViewSet(ReadOnlyModelViewSet):
+class MedicalSpecialtyViewSet(ModelViewSet):
     queryset = MedicalSpecialty.objects.all()
     serializer_class = MedicalSpecialtySerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminOrReadOnly]
+
 
 class EventViewSet(ModelViewSet):
     serializer_class = EventSerializer
@@ -34,20 +36,20 @@ class EventViewSet(ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-class VaccinationViewSet(ReadOnlyModelViewSet):
+class VaccinationViewSet(ModelViewSet):
     queryset = Vaccination.objects.all()
     serializer_class = VaccinationSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminOrReadOnly]
 
-class AnalysisPackageViewSet(ReadOnlyModelViewSet):
+class AnalysisPackageViewSet(ModelViewSet):
     queryset = AnalysisPackage.objects.all()
     serializer_class = AnalysisPackageSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminOrReadOnly]
 
-class AnalysisTestViewSet(ReadOnlyModelViewSet):
+class AnalysisTestViewSet(ModelViewSet):
     queryset = AnalysisTest.objects.all()
     serializer_class = AnalysisTestSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminOrReadOnly]
 
 class TreatmentPlanViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]

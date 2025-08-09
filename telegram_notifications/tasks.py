@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 @shared_task
 def process_due_treatment_intakes():
     now = timezone.now()
+    print(now)
 
     chat_id_sq = (
         TelegramAccount.objects

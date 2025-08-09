@@ -21,12 +21,14 @@ from django.conf.urls.static import static
 from django.http import JsonResponse
 
 
+
 def root_view(request):
     return JsonResponse({"message": "Backend is alive."})
 
 
 urlpatterns = [
                   path("api/services/", include("services.urls")),
+
                   path('', root_view),
                   path("__debug__/", include(debug_toolbar.urls)),
                   path("api/telegram/", include("telegram_notifications.urls")),

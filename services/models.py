@@ -45,7 +45,7 @@ class TreatmentIntake(models.Model):
     def schedule_next_run(self):
         now = timezone.now()
         start = self.plan.start_date
-        if now.date() < start:
+        if start is not None and now.date() < start:
             next_run = start
         else:
             next_run = now.replace(hour=self.time.hour, minute=self.time.minute, second=0, microsecond=0)
