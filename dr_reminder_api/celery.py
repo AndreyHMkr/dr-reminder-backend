@@ -1,7 +1,7 @@
 import os
 from celery import Celery
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "dr_reminder_api.settings.dev")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "dr_reminder_api.settings.prod")
 
 app = Celery("dr_reminder_api")
 app.config_from_object("django.conf:settings", namespace="CELERY")
