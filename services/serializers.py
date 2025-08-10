@@ -26,44 +26,72 @@ class MedicalSpecialtySerializer(serializers.ModelSerializer):
             "slug",
             "description",
         )
+class VaccinationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vaccination
+        fields = (
+            "id",
+            "title",
+            "slug",
+            "description",
+            "vaccine_info"
+        )
 
+
+class AnalysisTestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnalysisTest
+        fields = (
+            "id",
+            "package",
+            "title",
+            "description",
+        )
+
+
+class AnalysisPackageSerializer(serializers.ModelSerializer):
+    test = AnalysisTestSerializer(many=True, read_only=True, source="analysistest_set")
+
+    class Meta:
+        model = AnalysisPackage
+        fields = (
+            "id",
+            "title",
+            "test"
+        )
 
 class EventSerializer(serializers.ModelSerializer):
-    medical_specialty = serializers.SlugRelatedField(
-        slug_field='title',
+    # write-only ID
+    medical_specialty_id = serializers.PrimaryKeyRelatedField(
+        source="medical_specialty",
         queryset=MedicalSpecialty.objects.all(),
-        required=False,
-        allow_null=True,
+        write_only=True, required=False, allow_null=True,
     )
-    vaccination = serializers.SlugRelatedField(
-        slug_field='title',
+    vaccination_id = serializers.PrimaryKeyRelatedField(
+        source="vaccination",
         queryset=Vaccination.objects.all(),
-        required=False,
-        allow_null=True,
+        write_only=True, required=False, allow_null=True,
     )
-    analysis_test = serializers.SlugRelatedField(
-        slug_field='title',
+    analysis_test_id = serializers.PrimaryKeyRelatedField(
+        source="analysis_test",
         queryset=AnalysisTest.objects.all(),
-        required=False,
-        allow_null=True,
+        write_only=True, required=False, allow_null=True,
     )
+
+    medical_specialty = MedicalSpecialtySerializer(read_only=True)
+    vaccination = VaccinationSerializer(read_only=True)
+    analysis_test = AnalysisTestSerializer(read_only=True)
+
     blood_donation = serializers.BooleanField(required=False)
     event_type = serializers.ChoiceField(choices=EventType.choices, read_only=True)
 
     class Meta:
         model = Event
         fields = (
-            "id",
-            "name",
-            "short_description",
-            "start_date",
-            "start_time",
-            "medical_specialty",
-            "vaccination",
-            "analysis_test",
-            "blood_donation",
-            "event_type",
-            "created_at"
+            "id", "name", "short_description", "start_date", "start_time",
+            "medical_specialty_id", "vaccination_id", "analysis_test_id",
+            "medical_specialty", "vaccination", "analysis_test",
+            "blood_donation", "event_type", "created_at",
         )
         read_only_fields = ("id", "name", "event_type", "created_at")
 
@@ -102,39 +130,7 @@ class EventRetrySerializer(serializers.ModelSerializer):
         return {key: val for key, val in data.items() if val not in [None, False, "", [], {}]}
 
 
-class VaccinationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Vaccination
-        fields = (
-            "id",
-            "title",
-            "slug",
-            "description",
-            "vaccine_info"
-        )
 
-
-class AnalysisTestSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AnalysisTest
-        fields = (
-            "id",
-            "package",
-            "title",
-            "description",
-        )
-
-
-class AnalysisPackageSerializer(serializers.ModelSerializer):
-    test = AnalysisTestSerializer(many=True, read_only=True, source="analysistest_set")
-
-    class Meta:
-        model = AnalysisPackage
-        fields = (
-            "id",
-            "title",
-            "test"
-        )
 
 
 class TimesCharField(serializers.CharField):
