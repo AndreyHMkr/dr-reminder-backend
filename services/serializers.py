@@ -95,18 +95,7 @@ class EventSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "name", "event_type", "created_at")
 
-    def validate(self, attrs):
-        types_selected = [
-            bool(attrs.get("medical_specialty")),
-            bool(attrs.get("vaccination")),
-            bool(attrs.get("analysis_test")),
-            bool(attrs.get("blood_donation")),
-        ]
-        if sum(types_selected) != 1:
-            raise serializers.ValidationError(
-                "Only one of the fields [specialty, vaccination, test, donation] is allowed."
-            )
-        return attrs
+
 
 
 class EventRetrySerializer(serializers.ModelSerializer):
