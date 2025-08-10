@@ -7,7 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.parsers import MultiPartParser, FormParser
 from accounts.models import UserProfile
 from accounts.serializers import UserSerializer, ResetPasswordSerializer, ResetPasswordConfirmSerializer, \
-    UserProfileSerializer
+    UserProfileSerializer, HealthIndicatorsSerializer
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -67,3 +67,8 @@ class ResetPasswordConfirmView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)
+
+
+class HealthIndicatorsView(generics.CreateAPIView):
+    serializer_class = HealthIndicatorsSerializer
+    permission_classes = [AllowAny]

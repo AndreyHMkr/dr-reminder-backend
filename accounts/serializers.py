@@ -7,7 +7,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from jwt.utils import force_bytes
 from rest_framework import serializers
 
-from accounts.models import UserProfile
+from accounts.models import UserProfile, HealthIndicators
 from dr_reminder_api import settings
 
 
@@ -160,3 +160,17 @@ class ResetPasswordConfirmSerializer(serializers.Serializer):
         user.set_password(self.validated_data["new_password"])
         user.save()
         return user
+
+
+class HealthIndicatorsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HealthIndicators
+        fields = (
+            "id",
+            "user",
+            "pulse",
+            "blood_pressure",
+            "temperature",
+            "weight",
+            "height"
+        )

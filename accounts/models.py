@@ -1,6 +1,7 @@
 import os
 import uuid
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.contrib.auth.models import BaseUserManager
 from django.template.defaultfilters import slugify
@@ -78,3 +79,30 @@ class UserProfile(models.Model):
     class Meta:
         verbose_name = "User Profile"
         verbose_name_plural = "User Profiles"
+
+class HealthIndicators(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    pulse = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(30), MaxValueValidator(220)],
+        help_text="Heart rate in beats per minute"
+    )
+    blood_pressure = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(40), MaxValueValidator(250)],
+        help_text="Blood pressure"
+
+    )
+    temperature = models.FloatField (
+        validators=[MinValueValidator(30), MaxValueValidator(45)],
+        help_text="Body temperature in 36.6°C"
+    )
+    weight = models.FloatField(
+        validators=[MinValueValidator(2), MaxValueValidator(500)],
+        help_text="Body weight in kilograms 70.5"
+    )
+    height = models.FloatField(
+        validators=[MinValueValidator(30), MaxValueValidator(300)],
+        help_text="Height in centimeters"
+    )
+
+    def __str__(self):
+        return f"Health Indicator for {self.user}"
