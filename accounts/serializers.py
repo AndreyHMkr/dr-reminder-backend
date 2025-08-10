@@ -1,3 +1,5 @@
+import os
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
@@ -117,7 +119,12 @@ class ResetPasswordSerializer(serializers.Serializer):
         user = self.context.get("user")
         uid = urlsafe_base64_encode(force_bytes(str(user.pk)))
         token = default_token_generator.make_token(user)
-        reset_url = f"http://frontend-domain.com/reset-password-confirm/?uid={uid}&token={token}"
+        FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+        CONFIRM_PATH = "/reset-password-confirm/"
+        base = FRONTEND_URL.rstrip("/")
+        path = CONFIRM_PATH if CONFIRM_PATH.startswith("/") else f"/{CONFIRM_PATH}"
+        reset_url = f"{base}{path}?uid={uid}&token={token}"
+
         from_email = f"{settings.SITE_NAME} <{settings.DEFAULT_FROM_EMAIL}>"
 
         send_mail(

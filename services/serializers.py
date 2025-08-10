@@ -61,7 +61,6 @@ class AnalysisPackageSerializer(serializers.ModelSerializer):
         )
 
 class EventSerializer(serializers.ModelSerializer):
-    # write-only ID
     medical_specialty_id = serializers.PrimaryKeyRelatedField(
         source="medical_specialty",
         queryset=MedicalSpecialty.objects.all(),
