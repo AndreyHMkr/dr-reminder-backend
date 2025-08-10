@@ -27,7 +27,7 @@ class EventViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
-        if self.action == "retrieve":
+        if self.action in ("list", "retrieve"):
             return EventRetrySerializer
         return EventSerializer
     def get_queryset(self):
