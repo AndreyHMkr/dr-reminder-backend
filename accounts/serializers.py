@@ -9,6 +9,7 @@ from rest_framework import serializers
 
 from accounts.models import UserProfile, HealthIndicators
 from dr_reminder_api import settings
+from services.utils.recommendations import generate_recommendations
 
 
 def validate_password_complexity(password: str) -> str:
@@ -86,6 +87,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     username = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     email = serializers.EmailField(read_only=True)
+
     class Meta:
         model = UserProfile
         fields = (
@@ -99,10 +101,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "city",
             "image_profile"
         )
+
     extra_kwargs = {
         "user": {"write_only": True},
     }
-
 
 
 class ResetPasswordSerializer(serializers.Serializer):
@@ -163,6 +165,9 @@ class ResetPasswordConfirmSerializer(serializers.Serializer):
 
 
 class HealthIndicatorsSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    recommendations = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = HealthIndicators
         fields = (
@@ -172,5 +177,16 @@ class HealthIndicatorsSerializer(serializers.ModelSerializer):
             "blood_pressure",
             "temperature",
             "weight",
-            "height"
+            "height",
+            "recommendations"
         )
+
+    def get_recommendations(self, obj):
+        data = {
+            "pulse": obj.pulse,
+            "blood_pressure": obj.blood_pressure,
+            "temperature": obj.temperature,
+            "weight": obj.weight,
+            "height": obj.height,
+        }
+        return generate_recommendations(data)

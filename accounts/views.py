@@ -5,7 +5,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.parsers import MultiPartParser, FormParser
-from accounts.models import UserProfile
+from accounts.models import UserProfile, HealthIndicators
+from rest_framework import viewsets
+
 from accounts.serializers import UserSerializer, ResetPasswordSerializer, ResetPasswordConfirmSerializer, \
     UserProfileSerializer, HealthIndicatorsSerializer
 
@@ -69,6 +71,16 @@ class ResetPasswordConfirmView(generics.GenericAPIView):
         return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)
 
 
-class HealthIndicatorsView(generics.CreateAPIView):
+class HealthIndicatorsView(viewsets.ModelViewSet):
     serializer_class = HealthIndicatorsSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return HealthIndicators.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        instance, _ = HealthIndicators.objects.update_or_create(
+            user=self.request.user,
+            defaults=serializer.validated_data
+        )
+        serializer.instance = instance

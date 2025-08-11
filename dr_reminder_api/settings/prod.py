@@ -1,8 +1,12 @@
 from .base import *
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
+DEBUG = True
+LOGGING = {
+  "version": 1,
+  "handlers": {"console": {"class": "logging.StreamHandler"}},
+  "loggers": {"django.request": {"handlers": ["console"], "level": "ERROR"}},
+}
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8002",
