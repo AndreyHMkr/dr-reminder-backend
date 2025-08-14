@@ -76,7 +76,7 @@ class EventType(models.TextChoices):
 class Event(models.Model):
     class Meta:
         ordering = ["start_date"]
-
+    service = models.ForeignKey(Service, null=True, blank=True, on_delete=models.SET_NULL)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     short_description = models.TextField(blank=True)
@@ -89,7 +89,32 @@ class Event(models.Model):
     event_type = models.CharField(max_length=20, choices=EventType.choices, default=EventType.OTHER)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    SERVICE_TYPE_MAP = {
+        "mri": EventType.ANALYSIS,
+        "dentist": EventType.VISIT,
+        "ultrasound": EventType.ANALYSIS,
+        "therapy": EventType.VISIT,
+    }
+    SERVICE_BY_EVENT_TYPE = {
+        EventType.VISIT: "visit",
+        EventType.VACCINATION: "vaccination",
+        EventType.ANALYSIS: "analysis",
+        EventType.BLOOD_DONATION: "blood-donation",
+        EventType.OTHER: "other",
+    }
+
+    def _autofill_service(self):
+        if self.service or not self.event_type:
+            return
+        slug = self.SERVICE_BY_EVENT_TYPE.get(self.event_type)
+        if not slug:
+            return
+        try:
+            self.service = Service.objects.get(slug=slug)
+        except Service.DoesNotExist:
+            pass
     def save(self, *args, **kwargs):
+        # визначаємо name та event_type (твоя існуюча логіка)
         if self.medical_specialty:
             self.name = f"Visit to {self.medical_specialty.title}"
             self.event_type = EventType.VISIT
@@ -102,9 +127,17 @@ class Event(models.Model):
         elif self.blood_donation:
             self.name = "Blood donation"
             self.event_type = EventType.BLOOD_DONATION
+        elif self.service:
+            # якщо прислали service_id вручну
+            self.name = self.service.title
+            mapped = self.SERVICE_TYPE_MAP.get(self.service.slug)
+            self.event_type = mapped or EventType.OTHER
         else:
             self.name = "Other"
             self.event_type = EventType.OTHER
+
+        self._autofill_service()
+
         super().save(*args, **kwargs)
 
 

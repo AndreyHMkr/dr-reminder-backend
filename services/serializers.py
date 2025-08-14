@@ -77,9 +77,15 @@ class EventSerializer(serializers.ModelSerializer):
         write_only=True, required=False, allow_null=True,
     )
 
+    service_id = serializers.PrimaryKeyRelatedField(
+        source="service",
+        queryset=Service.objects.all(),
+        write_only=True, required=False, allow_null=True,
+    )
     medical_specialty = MedicalSpecialtySerializer(read_only=True)
     vaccination = VaccinationSerializer(read_only=True)
     analysis_test = AnalysisTestSerializer(read_only=True)
+    service = ServiceSerializer(read_only=True)
 
     blood_donation = serializers.BooleanField(required=False)
     event_type = serializers.ChoiceField(choices=EventType.choices, read_only=True)
@@ -89,11 +95,27 @@ class EventSerializer(serializers.ModelSerializer):
         fields = (
             "id", "name", "short_description", "start_date", "start_time",
             "medical_specialty_id", "vaccination_id", "analysis_test_id",
-            "medical_specialty", "vaccination", "analysis_test",
+            "service_id", "service",
+            "medical_specialty", "vaccination", "analysis_test", "service",
             "blood_donation", "event_type", "created_at",
         )
         read_only_fields = ("id", "name", "event_type", "created_at")
 
+    def validate(self, attrs):
+        picked = 0
+        if attrs.get("medical_specialty"): picked += 1
+        if attrs.get("vaccination"): picked += 1
+        if attrs.get("analysis_test"): picked += 1
+        if attrs.get("service"): picked += 1
+        if attrs.get("blood_donation"):
+            picked += 1
+
+        if picked > 1:
+            raise serializers.ValidationError(
+                "Please indicate just one of the fields: medical_specialty_id, vaccination_id, "
+                "analysis_test_id, service_id або blood_donation=true."
+            )
+        return attrs
 
 
 
@@ -108,6 +130,7 @@ class EventRetrySerializer(serializers.ModelSerializer):
             "medical_specialty",
             "vaccination",
             "analysis_test",
+            "service",
             "blood_donation",
             "event_type",
             "created_at"
