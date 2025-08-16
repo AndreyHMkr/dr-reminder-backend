@@ -7,7 +7,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from jwt.utils import force_bytes
 from rest_framework import serializers
 
-from accounts.models import UserProfile, HealthIndicators
+from accounts.models import UserProfile, HealthIndicators, MedicalDocument
 from dr_reminder_api import settings
 from services.utils.recommendations import generate_recommendations
 
@@ -106,7 +106,16 @@ class UserProfileSerializer(serializers.ModelSerializer):
         "user": {"write_only": True},
     }
 
-
+class MedicalDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicalDocument
+        fields = (
+            "id",
+            "title",
+            "file",
+            "uploaded_at",
+        )
+        read_only_fields = ("id", "uploaded_at",)
 
 
 class ResetPasswordSerializer(serializers.Serializer):
@@ -192,3 +201,4 @@ class HealthIndicatorsSerializer(serializers.ModelSerializer):
             "height": obj.height,
         }
         return generate_recommendations(data)
+

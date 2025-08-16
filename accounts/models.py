@@ -106,3 +106,13 @@ class HealthIndicators(models.Model):
 
     def __str__(self):
         return f"Health Indicator for {self.user}"
+
+def doc_upload_path(instance, filename):
+    # /medical_documents/<user_id>/<filename>
+    return f"medical_documents/{instance.user_id}/{filename}"
+
+class MedicalDocument(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    file = models.FileField(upload_to=doc_upload_path)
+    uploaded_at = models.DateTimeField(auto_now_add=True)

@@ -5,11 +5,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.parsers import MultiPartParser, FormParser
-from accounts.models import UserProfile, HealthIndicators
+from accounts.models import UserProfile, HealthIndicators, MedicalDocument
 from rest_framework import viewsets
 
 from accounts.serializers import UserSerializer, ResetPasswordSerializer, ResetPasswordConfirmSerializer, \
-    UserProfileSerializer, HealthIndicatorsSerializer
+    UserProfileSerializer, HealthIndicatorsSerializer, MedicalDocumentSerializer
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -51,7 +51,14 @@ class UserPhotoView(APIView):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+class MedicalDocumentListCreateView(generics.ListCreateAPIView):
+    serializer_class = MedicalDocumentSerializer
+    permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return MedicalDocument.objects.filter(user=self.request.user)
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     parser_classes = (MultiPartParser, FormParser)
     serializer_class = UserProfileSerializer
