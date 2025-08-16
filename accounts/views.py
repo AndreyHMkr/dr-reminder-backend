@@ -35,6 +35,22 @@ class UserProfileView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     queryset = UserProfile.objects.all()
 
+class UserPhotoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        try:
+            profile = request.user.userprofile
+        except UserProfile.DoesNotExist:
+            return Response({"detail": "User profile does not exist."}, status=404)
+
+        if profile.image_profile:
+            profile.image_profile.delete(save=False)
+            profile.image_profile = None
+            profile.save(update_fields=["image_profile"])
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     parser_classes = (MultiPartParser, FormParser)
