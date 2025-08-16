@@ -1,0 +1,106 @@
+[
+    {
+        "model": "services.analysispackage",
+        "pk": 1,
+        "fields": {
+            "title": "Basic Health Screening"
+        }
+    },
+    {
+        "model": "services.analysispackage",
+        "pk": 2,
+        "fields": {
+            "title": "Comprehensive Metabolic Panel"
+        }
+    },
+    {
+        "model": "services.analysistest",
+        "pk": 1,
+        "fields": {
+            "package": 1,
+            "title": "Complete Blood Count (CBC)",
+            "description": "Measures red and white blood cells, hemoglobin, hematocrit and platelets."
+        }
+    },
+    {
+        "model": "services.analysistest",
+        "pk": 2,
+        "fields": {
+            "package": 1,
+            "title": "Basic Metabolic Panel",
+            "description": "Assesses glucose, electrolytes and kidney function."
+        }
+    },
+    {
+        "model": "services.analysistest",
+        "pk": 3,
+        "fields": {
+            "package": 1,
+            "title": "Lipid Panel",
+            "description": "Measures total cholesterol, LDL, HDL and triglycerides."
+        }
+    },
+    {
+        "model": "services.analysistest",
+        "pk": 4,
+        "fields": {
+            "package": 1,
+            "title": "Thyroid Function Tests",
+            "description": "Commonly includes TSH with reflex to FT4/FT3 when indicated."
+        }
+    },
+    {
+        "model": "services.analysistest",
+        "pk": 5,
+        "fields": {
+            "package": 2,
+            "title": "Glucose",
+            "description": "Blood glucose level (fasting recommended)."
+        }
+    },
+    {
+        "model": "services.analysistest",
+        "pk": 6,
+        "fields": {
+            "package": 2,
+            "title": "Calcium",
+            "description": "Total serum calcium."
+        }
+    },
+    {
+        "model": "services.analysistest",
+        "pk": 7,
+        "fields": {
+            "package": 2,
+            "title": "Electrolytes",
+            "description": "Sodium, Potassium, Chloride, CO₂ (bicarbonate)."
+        }
+    },
+    {
+        "model": "services.analysistest",
+        "pk": 8,
+        "fields": {
+            "package": 2,
+            "title": "Kidney Function",
+            "description": "BUN and Creatinine with eGFR."
+        }
+    },
+    {
+        "model": "services.analysistest",
+        "pk": 9,
+        "fields": {
+            "package": 2,
+            "title": "Liver Enzymes",
+            "description": "ALT, AST, ALP and total bilirubin."
+        }
+    },
+    {
+        "model": "services.analysistest",
+        "pk": 10,
+        "fields": {
+            "package": 2,
+            "title": "Proteins",
+            "description": "Albumin and total protein."
+        }
+    }
+]
