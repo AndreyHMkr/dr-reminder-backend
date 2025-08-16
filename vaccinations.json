@@ -1,0 +1,72 @@
+[
+    {
+        "model": "app_name.vaccination",
+        "pk": 1,
+        "fields": {
+            "title": "Hepatitis B",
+            "slug": "hepatitis-b",
+            "description": "A viral infection that attacks the liver and can become chronic, leading to liver failure or cancer.",
+            "vaccine_info": "HepB"
+        }
+    },
+    {
+        "model": "app_name.vaccination",
+        "pk": 2,
+        "fields": {
+            "title": "Tuberculosis",
+            "slug": "tuberculosis",
+            "description": "A bacterial infection mainly affecting the lungs but can involve other organs; it can be severe or fatal.",
+            "vaccine_info": "BCG"
+        }
+    },
+    {
+        "model": "app_name.vaccination",
+        "pk": 3,
+        "fields": {
+            "title": "Measles, Mumps, Rubella (MMR)",
+            "slug": "measles-mumps-rubella-mmr",
+            "description": "Viral infections. Measles: highly contagious with possible complications. Mumps: swelling of salivary glands and possible complications. Rubella: generally mild except in pregnancy, where it can cause serious birth defects.",
+            "vaccine_info": "MMR"
+        }
+    },
+    {
+        "model": "app_name.vaccination",
+        "pk": 4,
+        "fields": {
+            "title": "Diphtheria, Tetanus",
+            "slug": "diphtheria-tetanus",
+            "description": "Diphtheria: causes a thick covering in throat, can block airways and cause complications. Tetanus: causes severe muscle spasms, often fatal if untreated.",
+            "vaccine_info": "DTaP, Td, Tdap"
+        }
+    },
+    {
+        "model": "app_name.vaccination",
+        "pk": 5,
+        "fields": {
+            "title": "Pertussis (Whooping cough)",
+            "slug": "pertussis-whooping-cough",
+            "description": "A highly contagious respiratory disease causing violent coughing fits, dangerous for infants.",
+            "vaccine_info": "DTaP, Tdap"
+        }
+    },
+    {
+        "model": "app_name.vaccination",
+        "pk": 6,
+        "fields": {
+            "title": "Poliomyelitis (Polio)",
+            "slug": "poliomyelitis-polio",
+            "description": "A viral disease that can cause paralysis and even death if breathing muscles are affected.",
+            "vaccine_info": "IPV"
+        }
+    },
+    {
+        "model": "app_name.vaccination",
+        "pk": 7,
+        "fields": {
+            "title": "Haemophilus influenzae type b (Hib) infection",
+            "slug": "haemophilus-influenzae-type-b-hib-infection",
+            "description": "A bacterial infection that can cause meningitis, pneumonia, and other serious illnesses, especially in children.",
+            "vaccine_info": "Hib"
+        }
+    }
+]

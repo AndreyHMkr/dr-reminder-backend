@@ -114,7 +114,6 @@ class Event(models.Model):
         except Service.DoesNotExist:
             pass
     def save(self, *args, **kwargs):
-        # визначаємо name та event_type (твоя існуюча логіка)
         if self.medical_specialty:
             self.name = f"Visit to {self.medical_specialty.title}"
             self.event_type = EventType.VISIT
@@ -128,7 +127,6 @@ class Event(models.Model):
             self.name = "Blood donation"
             self.event_type = EventType.BLOOD_DONATION
         elif self.service:
-            # якщо прислали service_id вручну
             self.name = self.service.title
             mapped = self.SERVICE_TYPE_MAP.get(self.service.slug)
             self.event_type = mapped or EventType.OTHER
