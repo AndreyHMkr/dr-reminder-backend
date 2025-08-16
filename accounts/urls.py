@@ -25,7 +25,7 @@ urlpatterns = [
                   path("profile/", UserProfileView.as_view(), name="profile"),
                   path("me/", UserDetailView.as_view(), name="me"),
                   path("me/photo/", UserPhotoView.as_view(), name="me-photo"),
-                  path("accounts/medical-documents/", MedicalDocumentListCreateView.as_view()),
+                  path("medical-documents/", MedicalDocumentListCreateView.as_view()),
                   path("reset-password/", ResetPasswordView.as_view(), name="reset-password"),
                   path("reset-password-confirm/", ResetPasswordConfirmView.as_view(), name="reset-password-confirm"),
                   path("token/verify/", TokenVerifyView.as_view(), name="token_verify")
