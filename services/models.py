@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, date
+from datetime import timedelta
 
 from django.db import models
 from django.utils import timezone
@@ -163,8 +163,31 @@ class AnalysisTest(models.Model):
 
     def __str__(self):
         return self.title
+class DonationCenter(models.Model):
+    title = models.CharField(max_length=150, unique=True)
+    slug = models.SlugField(max_length=150, unique=True)
+    address = models.CharField(max_length=150, blank=True)
+    city = models.CharField(max_length=150, blank=True)
+    phone = models.CharField(max_length=50, blank=True)
+
+    class Meta:
+        ordering = ["city", "title"]
+
+    def __str__(self):
+        return self.title
 
 class BloodDonation(models.Model):
-    center = models.CharField(max_length=100, null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    center = models.ForeignKey(DonationCenter, on_delete=models.PROTECT, null=True, blank=True)
     date = models.DateField()
     time = models.TimeField()
+
+    class Meta:
+        ordering = ["-date", "-time"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "date", "time"],
+                name="uniq_blood_donation_user_date_time",
+
+            )
+        ]

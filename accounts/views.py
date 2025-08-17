@@ -3,6 +3,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.parsers import MultiPartParser, FormParser
 from accounts.models import UserProfile, HealthIndicators, MedicalDocument
@@ -10,7 +11,9 @@ from rest_framework import viewsets
 
 from accounts.serializers import UserSerializer, ResetPasswordSerializer, ResetPasswordConfirmSerializer, \
     UserProfileSerializer, HealthIndicatorsSerializer, MedicalDocumentSerializer
+from services.models import BloodDonation, DonationCenter
 from services.permissions import IsOwner
+from services.serializers import BloodDonationSerializer, DonationCenterSerializer
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -55,11 +58,11 @@ class UserPhotoView(APIView):
 
 
 class MedicalDocumentViewSet(mixins.ListModelMixin,
-                                    mixins.CreateModelMixin,
-                                    mixins.RetrieveModelMixin,
-                                    mixins.DestroyModelMixin,
-                                    viewsets.GenericViewSet
-                                    ):
+                             mixins.CreateModelMixin,
+                             mixins.RetrieveModelMixin,
+                             mixins.DestroyModelMixin,
+                             viewsets.GenericViewSet
+                             ):
     serializer_class = MedicalDocumentSerializer
     permission_classes = [IsAuthenticated, IsOwner]
     parser_classes = [MultiPartParser, FormParser]
@@ -119,3 +122,20 @@ class HealthIndicatorsView(viewsets.ModelViewSet):
             defaults=serializer.validated_data
         )
         serializer.instance = instance
+
+
+class DonationCenterViewSet(ModelViewSet):
+    queryset = DonationCenter.objects.all().order_by("city", "title")
+    serializer_class = DonationCenterSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class BloodDonationView(viewsets.ModelViewSet):
+    serializer_class = BloodDonationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return BloodDonation.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

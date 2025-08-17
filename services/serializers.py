@@ -2,7 +2,7 @@ from rest_framework import serializers
 from datetime import datetime
 
 from services.models import Service, MedicalSpecialty, Event, Vaccination, AnalysisPackage, AnalysisTest, EventType, \
-    TreatmentPlan, TreatmentIntake
+    TreatmentPlan, TreatmentIntake, BloodDonation, DonationCenter
 
 
 class ServiceSerializer(serializers.ModelSerializer):
@@ -26,6 +26,8 @@ class MedicalSpecialtySerializer(serializers.ModelSerializer):
             "slug",
             "description",
         )
+
+
 class VaccinationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vaccination
@@ -59,6 +61,7 @@ class AnalysisPackageSerializer(serializers.ModelSerializer):
             "title",
             "test"
         )
+
 
 class EventSerializer(serializers.ModelSerializer):
     medical_specialty_id = serializers.PrimaryKeyRelatedField(
@@ -118,7 +121,6 @@ class EventSerializer(serializers.ModelSerializer):
         return attrs
 
 
-
 class EventRetrySerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
@@ -139,9 +141,6 @@ class EventRetrySerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         return {key: val for key, val in data.items() if val not in [None, False, "", [], {}]}
-
-
-
 
 
 class TimesCharField(serializers.CharField):
@@ -206,3 +205,22 @@ class TreatmentPlanReadSerializer(serializers.ModelSerializer):
 
     def get_times(self, obj):
         return [i.time.strftime("%H:%M") for i in obj.intakes.all()]
+
+
+class DonationCenterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DonationCenter
+        fields = ("id", "title", "slug", "address", "city", "phone")
+
+
+class BloodDonationSerializer(serializers.ModelSerializer):
+    center = serializers.PrimaryKeyRelatedField(queryset=DonationCenter.objects.all())
+    class Meta:
+        model = BloodDonation
+        fields = (
+            "id",
+            "center",
+            "date",
+            "time"
+        )
+
