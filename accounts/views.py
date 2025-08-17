@@ -1,4 +1,4 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, mixins, permissions
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -10,6 +10,7 @@ from rest_framework import viewsets
 
 from accounts.serializers import UserSerializer, ResetPasswordSerializer, ResetPasswordConfirmSerializer, \
     UserProfileSerializer, HealthIndicatorsSerializer, MedicalDocumentSerializer
+from services.permissions import IsOwner
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -35,6 +36,7 @@ class UserProfileView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     queryset = UserProfile.objects.all()
 
+
 class UserPhotoView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -51,14 +53,24 @@ class UserPhotoView(APIView):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-class MedicalDocumentListCreateView(generics.ListCreateAPIView):
+
+class MedicalDocumentViewSet(mixins.ListModelMixin,
+                                    mixins.CreateModelMixin,
+                                    mixins.RetrieveModelMixin,
+                                    mixins.DestroyModelMixin,
+                                    viewsets.GenericViewSet
+                                    ):
     serializer_class = MedicalDocumentSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwner]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
         return MedicalDocument.objects.filter(user=self.request.user)
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     parser_classes = (MultiPartParser, FormParser)
     serializer_class = UserProfileSerializer
