@@ -163,3 +163,8 @@ class AnalysisTest(models.Model):
 
     def __str__(self):
         return self.title
+
+class BloodDonation(models.Model):
+    center = models.CharField(max_length=100, null=True, blank=True)
+    date = models.DateField()
+    time = models.TimeField()

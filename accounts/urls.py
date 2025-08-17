@@ -16,7 +16,9 @@ def accounts_root(request):
 
 
 router = DefaultRouter()
-router.register(r'health-indicators', HealthIndicatorsView, basename='health-indicators')
+router.register("health-indicators", HealthIndicatorsView, basename='health-indicators')
+router.register("medical-documents", MedicalDocumentViewSet, basename="medical-document"),
+
 urlpatterns = [
                   path("", accounts_root),
                   path("register/", CreateUserView.as_view(), name="register"),
@@ -25,7 +27,6 @@ urlpatterns = [
                   path("profile/", UserProfileView.as_view(), name="profile"),
                   path("me/", UserDetailView.as_view(), name="me"),
                   path("me/photo/", UserPhotoView.as_view(), name="me-photo"),
-                  router.register(r'accounts/medical-documents', MedicalDocumentViewSet, basename='medical-document'),
                   path("reset-password/", ResetPasswordView.as_view(), name="reset-password"),
                   path("reset-password-confirm/", ResetPasswordConfirmView.as_view(), name="reset-password-confirm"),
                   path("token/verify/", TokenVerifyView.as_view(), name="token_verify")
