@@ -106,6 +106,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         "user": {"write_only": True},
     }
 
+
 class MedicalDocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = MedicalDocument
@@ -115,7 +116,37 @@ class MedicalDocumentSerializer(serializers.ModelSerializer):
             "file",
             "uploaded_at",
         )
-        read_only_fields = ("id", "uploaded_at",)
+
+    def validate(self, attrs):
+        file = attrs.get("file")
+        title = attrs.get("title")
+        if not title and file:
+            attrs["title"] = os.path.splitext(file.name)[0]
+
+        user = self.context["request"].user
+        t = attrs.get("title")
+        if t and MedicalDocument.objects.filter(user=user, title=t).exists():
+            raise serializers.ValidationError({"title": "Document with this title already exists."})
+
+        return attrs
+
+class MedicalDocumentBulkUploadSerializer(serializers.Serializer):
+    file = serializers.ListField(
+        child=serializers.FileField(),
+        allow_empty=False
+    )
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        docs = []
+        for file in validated_data["files"]:
+            title = os.path.splitext(file.name)[0]
+            base, idx = title, 1
+            while MedicalDocument.objects.filter(user=user, title=title).exists():
+                title = f"{base} ({idx})"
+                idx += 1
+            docs.append(MedicalDocument.objects.create(user=user, title=title, file=file))
+        return docs
 
 
 class ResetPasswordSerializer(serializers.Serializer):
@@ -201,4 +232,3 @@ class HealthIndicatorsSerializer(serializers.ModelSerializer):
             "height": obj.height,
         }
         return generate_recommendations(data)
-

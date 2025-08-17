@@ -112,7 +112,13 @@ def doc_upload_path(instance, filename):
     return f"medical_documents/{instance.user_id}/{filename}"
 
 class MedicalDocument(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     file = models.FileField(upload_to=doc_upload_path)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-uploaded_at"]
+
+    def __str__(self):
+        return f"{self.title} ({self.user_id})"

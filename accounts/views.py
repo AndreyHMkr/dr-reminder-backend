@@ -1,4 +1,5 @@
 from rest_framework import generics, status, mixins, permissions
+from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -10,7 +11,7 @@ from accounts.models import UserProfile, HealthIndicators, MedicalDocument
 from rest_framework import viewsets
 
 from accounts.serializers import UserSerializer, ResetPasswordSerializer, ResetPasswordConfirmSerializer, \
-    UserProfileSerializer, HealthIndicatorsSerializer, MedicalDocumentSerializer
+    UserProfileSerializer, HealthIndicatorsSerializer, MedicalDocumentSerializer, MedicalDocumentBulkUploadSerializer
 from services.models import BloodDonation, DonationCenter
 from services.permissions import IsOwner
 from services.serializers import BloodDonationSerializer, DonationCenterSerializer
@@ -57,14 +58,9 @@ class UserPhotoView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class MedicalDocumentViewSet(mixins.ListModelMixin,
-                             mixins.CreateModelMixin,
-                             mixins.RetrieveModelMixin,
-                             mixins.DestroyModelMixin,
-                             viewsets.GenericViewSet
-                             ):
+class MedicalDocumentViewSet(viewsets.ModelViewSet):
     serializer_class = MedicalDocumentSerializer
-    permission_classes = [IsAuthenticated, IsOwner]
+    permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
@@ -72,6 +68,13 @@ class MedicalDocumentViewSet(mixins.ListModelMixin,
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=["post"], url_path="bulk")
+    def bulk_upload(self, request, *args, **kwargs):
+        ser = MedicalDocumentBulkUploadSerializer(data=request.data, context={"request": request})
+        ser.is_valid(raise_exception=True)
+        docs = ser.save()
+        return Response(MedicalDocumentSerializer(docs, many=True).data, status=status.HTTP_201_CREATED)
 
 
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
