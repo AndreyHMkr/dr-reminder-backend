@@ -1,4 +1,4 @@
-from rest_framework import generics, status, mixins, permissions
+from rest_framework import generics, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -12,8 +12,7 @@ from rest_framework import viewsets
 
 from accounts.serializers import UserSerializer, ResetPasswordSerializer, ResetPasswordConfirmSerializer, \
     UserProfileSerializer, HealthIndicatorsSerializer, MedicalDocumentSerializer, MedicalDocumentBulkUploadSerializer
-from services.models import BloodDonation, DonationCenter
-from services.permissions import IsOwner
+from services.models import BloodDonation, DonationCenter, Event
 from services.serializers import BloodDonationSerializer, DonationCenterSerializer
 
 
@@ -138,7 +137,30 @@ class BloodDonationView(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return BloodDonation.objects.filter(user=self.request.user)
+        return BloodDonation.objects.filter(user=self.request.user).select_related("center")
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        donation = serializer.save(user=self.request.user)
+        Event.objects.update_or_create(
+            blood_donation=donation,
+            defaults={
+                "user": donation.user,
+                "start_date": donation.date,
+                "start_time": donation.time,
+            },
+        )
+
+    def perform_update(self, serializer):
+        donation = serializer.save()
+        Event.objects.update_or_create(
+            blood_donation=donation,
+            defaults={
+                "user": donation.user,
+                "start_date": donation.date,
+                "start_time": donation.time,
+            },
+        )
+
+    def perform_destroy(self, instance):
+        Event.objects.filter(blood_donation=instance).delete()
+        super().perform_destroy(instance)

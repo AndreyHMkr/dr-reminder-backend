@@ -64,6 +64,8 @@ class AnalysisPackageSerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(serializers.ModelSerializer):
+    blood_donation = serializers.IntegerField(source="blood_donation_fk_id", read_only=True)
+
     medical_specialty_id = serializers.PrimaryKeyRelatedField(
         source="medical_specialty",
         queryset=MedicalSpecialty.objects.all(),

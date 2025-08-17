@@ -85,7 +85,8 @@ class Event(models.Model):
     medical_specialty = models.ForeignKey("MedicalSpecialty", null=True, blank=True, on_delete=models.SET_NULL)
     vaccination = models.ForeignKey("Vaccination", null=True, blank=True, on_delete=models.SET_NULL)
     analysis_test = models.ForeignKey("AnalysisTest", null=True, blank=True, on_delete=models.SET_NULL)
-    blood_donation = models.BooleanField(default=False)
+    blood_donation = models.OneToOneField("BloodDonation", null=True, blank=True, on_delete=models.CASCADE, related_name="event", db_column="blood_donation_id",
+)
     event_type = models.CharField(max_length=20, choices=EventType.choices, default=EventType.OTHER)
     created_at = models.DateTimeField(auto_now_add=True)
 
