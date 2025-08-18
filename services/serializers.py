@@ -69,117 +69,140 @@ class DonationCenterSerializer(serializers.ModelSerializer):
         fields = ("id", "title", "slug", "address", "city", "phone")
 
 
+class BloodDonationSerializer(serializers.ModelSerializer):
+    center = serializers.PrimaryKeyRelatedField(queryset=DonationCenter.objects.all())
+    date = serializers.DateField(required=False)
+    time = serializers.TimeField(required=False)
+
+    class Meta:
+        model = BloodDonation
+        fields = ("id", "center", "date", "time")
+
 
 class EventSerializer(serializers.ModelSerializer):
-    donation_center = serializers.SlugRelatedField(
-        slug_field="title",
-        queryset=DonationCenter.objects.all(),
-        write_only=True, required=False, allow_null=True,
-    )
-    blood_donation = serializers.IntegerField(source="blood_donation_id", read_only=True)
-
-
-    medical_specialty_id = serializers.PrimaryKeyRelatedField(
-        source="medical_specialty",
-        queryset=MedicalSpecialty.objects.all(),
-        write_only=True, required=False, allow_null=True,
-    )
-    vaccination_id = serializers.PrimaryKeyRelatedField(
-        source="vaccination",
-        queryset=Vaccination.objects.all(),
-        write_only=True, required=False, allow_null=True,
-    )
-    analysis_test_id = serializers.PrimaryKeyRelatedField(
-        source="analysis_test",
-        queryset=AnalysisTest.objects.all(),
-        write_only=True, required=False, allow_null=True,
-    )
-
-    service_id = serializers.PrimaryKeyRelatedField(
-        source="service",
-        queryset=Service.objects.all(),
-        write_only=True, required=False, allow_null=True,
-    )
+    service = ServiceSerializer(read_only=True)
     medical_specialty = MedicalSpecialtySerializer(read_only=True)
     vaccination = VaccinationSerializer(read_only=True)
     analysis_test = AnalysisTestSerializer(read_only=True)
-    service = ServiceSerializer(read_only=True)
+    blood_donation = BloodDonationSerializer(read_only=True)
+
+    service_id = serializers.PrimaryKeyRelatedField(
+        source="service", queryset=Service.objects.all(),
+        write_only=True, required=False, allow_null=True, label="Service id"
+    )
+    medical_specialty_id = serializers.PrimaryKeyRelatedField(
+        source="medical_specialty", queryset=MedicalSpecialty.objects.all(),
+        write_only=True, required=False, allow_null=True, label="Medical specialty id"
+    )
+    vaccination_id = serializers.PrimaryKeyRelatedField(
+        source="vaccination", queryset=Vaccination.objects.all(),
+        write_only=True, required=False, allow_null=True, label="Vaccination id"
+    )
+    analysis_test_id = serializers.PrimaryKeyRelatedField(
+        source="analysis_test", queryset=AnalysisTest.objects.all(),
+        write_only=True, required=False, allow_null=True, label="Analysis test id"
+    )
+
+    blood_donation_id = serializers.PrimaryKeyRelatedField(
+        source="blood_donation",
+        queryset=BloodDonation.objects.all(),
+        write_only=True, required=False, allow_null=True,
+        label="Blood donation id"
+    )
+    donation_center_id = serializers.PrimaryKeyRelatedField(
+        queryset=DonationCenter.objects.all(),
+        write_only=True, required=False, allow_null=True,
+        label="Donation center"
+    )
+
+    blood_donation_data = BloodDonationSerializer(write_only=True, required=False)
 
     event_type = serializers.ChoiceField(choices=EventType.choices, read_only=True)
-
 
     class Meta:
         model = Event
         fields = (
-            "id", "name", "short_description", "start_date", "start_time",
-            "medical_specialty_id", "vaccination_id", "analysis_test_id",
-            "service_id", "service",
-            "medical_specialty", "vaccination", "analysis_test", "service",
-            "donation_center",
-            "blood_donation", "event_type", "created_at",
+            "id", "name", "short_description",
+            "start_date", "start_time",
+            "service", "service_id",
+            "medical_specialty", "medical_specialty_id",
+            "vaccination", "vaccination_id",
+            "analysis_test", "analysis_test_id",
+            "blood_donation", "blood_donation_id",
+            "donation_center_id", "blood_donation_data",
+            "event_type", "created_at",
         )
         read_only_fields = ("id", "name", "event_type", "created_at")
 
     def validate(self, attrs):
-        picked = 0
-        if attrs.get("medical_specialty"): picked += 1
-        if attrs.get("vaccination"): picked += 1
-        if attrs.get("analysis_test"): picked += 1
-        if attrs.get("service"): picked += 1
-        if attrs.get("donation_center"): picked += 1  # <-- вот так
+        dc = attrs.pop("donation_center_id", None)
+        if dc is not None:
+            bd = attrs.setdefault("blood_donation_data", {})
+            bd["center"] = dc
+            bd.setdefault("date", attrs.get("start_date"))
+            bd.setdefault("time", attrs.get("start_time"))
 
+        picked = sum(1 for k in ("medical_specialty", "vaccination", "analysis_test", "service", "blood_donation")
+                     if attrs.get(k))
+        if attrs.get("blood_donation_data"):
+            picked += 1
         if picked > 1:
             raise serializers.ValidationError(
-                "Only one: medical_specialty_id, vaccination_id, "
-                "analysis_test_id, service_id або donation_center."
+                "Pick only one of: medical_specialty_id, vaccination_id, analysis_test_id, "
+                "service_id, blood_donation_id / donation_center / blood_donation_data."
             )
+        if picked == 0:
+            raise serializers.ValidationError(
+                "You must provide one related field (service or specialty/vaccination/analysis_test or blood_donation)."
+            )
+
+        bd = attrs.get("blood_donation_data")
+        if bd is not None:
+            if bd.get("date") is None or bd.get("time") is None:
+                raise serializers.ValidationError(
+                    "For blood donation provide start_date and start_time "
+                    "(or date/time in blood_donation_data)."
+                )
         return attrs
 
-    def create(self, validated_data):
-        user = self.context["request"].user
-        center = validated_data.pop("donation_center", None)  # <-- объект DonationCenter или None
+    def create(self, validated):
+        request = self.context.get("request")
+        bd_nested = validated.pop("blood_donation_data", None)
 
-        if center:
-            donation = BloodDonation.objects.create(
-                user=user,
-                center=center,
-                date=validated_data["start_date"],
-                time=validated_data["start_time"],
-            )
-            validated_data["blood_donation"] = donation
+        if bd_nested:
+            bd_nested["user"] = request.user
+            validated["blood_donation"] = BloodDonation.objects.create(**bd_nested)
 
+        event = super().create(validated)
 
-        return super().create(validated_data)
+        if event.blood_donation_id:
+            event.event_type = EventType.BLOOD_DONATION
+            event.name = event.name or "Blood donation"
+        elif event.vaccination_id:
+            event.event_type = EventType.VACCINATION
+            event.name = event.name or event.vaccination.title
+        elif event.analysis_test_id:
+            event.event_type = EventType.ANALYSIS_TEST
+            event.name = event.name or event.analysis_test.title
+        elif event.medical_specialty_id:
+            event.event_type = EventType.VISIT
+            event.name = event.name or f"Visit to {event.medical_specialty.title}"
+        elif event.service_id:
+            event.event_type = EventType.OTHER
+            event.name = event.name or event.service.title
 
-    def update(self, instance, validated_data):
-        center = validated_data.pop("donation_center", None)
-
-        is_bd = (instance.blood_donation_id is not None) or (center is not None)
-        if is_bd:
-            donation = getattr(instance, "blood_donation", None)
-            if donation is None:
-                donation = BloodDonation.objects.create(
-                    user=instance.user,
-                    center=center,
-                    date=validated_data.get("start_date", instance.start_date),
-                    time=validated_data.get("start_time", instance.start_time),
-                )
-                validated_data["blood_donation"] = donation
-            else:
-                if center is not None:
-                    donation.center = center
-                if "start_date" in validated_data:
-                    donation.date = validated_data["start_date"]
-                if "start_time" in validated_data:
-                    donation.time = validated_data["start_time"]
-                donation.save()
-
-        return super().update(instance, validated_data)
+        event.save(update_fields=["event_type", "name"])
+        return event
 
 
 class EventRetrySerializer(serializers.ModelSerializer):
+    service = ServiceSerializer(read_only=True)
+    medical_specialty = MedicalSpecialtySerializer(read_only=True)
+    vaccination = VaccinationSerializer(read_only=True)
+    analysis_test = AnalysisTestSerializer(read_only=True)
+
     blood_donation = serializers.IntegerField(source="blood_donation_fk_id", read_only=True)
-    donation_center = DonationCenterSerializer(source="blood_donation_fk.center", read_only=True)
+    donation_center = DonationCenterSerializer(source="blood_donation.center", read_only=True)
 
     class Meta:
         model = Event
@@ -193,8 +216,6 @@ class EventRetrySerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         return {k: v for k, v in data.items() if v not in [None, False, "", [], {}]}
-
-
 class TimesCharField(serializers.CharField):
     def to_internal_value(self, data):
         if not data:
@@ -259,14 +280,4 @@ class TreatmentPlanReadSerializer(serializers.ModelSerializer):
         return [i.time.strftime("%H:%M") for i in obj.intakes.all()]
 
 
-class BloodDonationSerializer(serializers.ModelSerializer):
-    center = serializers.PrimaryKeyRelatedField(queryset=DonationCenter.objects.all())
 
-    class Meta:
-        model = BloodDonation
-        fields = (
-            "id",
-            "center",
-            "date",
-            "time"
-        )
