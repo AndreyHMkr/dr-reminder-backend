@@ -109,13 +109,6 @@ class EventSerializer(serializers.ModelSerializer):
         write_only=True, required=False, allow_null=True,
         label="Blood donation id"
     )
-    donation_center_id = serializers.PrimaryKeyRelatedField(
-        queryset=DonationCenter.objects.all(),
-        write_only=True, required=False, allow_null=True,
-        label="Donation center"
-    )
-
-    blood_donation_data = BloodDonationSerializer(write_only=True, required=False)
 
     event_type = serializers.ChoiceField(choices=EventType.choices, read_only=True)
 
@@ -129,23 +122,16 @@ class EventSerializer(serializers.ModelSerializer):
             "vaccination", "vaccination_id",
             "analysis_test", "analysis_test_id",
             "blood_donation", "blood_donation_id",
-            "donation_center_id", "blood_donation_data",
+
             "event_type", "created_at",
         )
         read_only_fields = ("id", "name", "event_type", "created_at")
 
     def validate(self, attrs):
-        dc = attrs.pop("donation_center_id", None)
-        if dc is not None:
-            bd = attrs.setdefault("blood_donation_data", {})
-            bd["center"] = dc
-            bd.setdefault("date", attrs.get("start_date"))
-            bd.setdefault("time", attrs.get("start_time"))
 
         picked = sum(1 for k in ("medical_specialty", "vaccination", "analysis_test", "service", "blood_donation")
                      if attrs.get(k))
-        if attrs.get("blood_donation_data"):
-            picked += 1
+
         if picked > 1:
             raise serializers.ValidationError(
                 "Pick only one of: medical_specialty_id, vaccination_id, analysis_test_id, "
@@ -156,22 +142,12 @@ class EventSerializer(serializers.ModelSerializer):
                 "You must provide one related field (service or specialty/vaccination/analysis_test or blood_donation)."
             )
 
-        bd = attrs.get("blood_donation_data")
-        if bd is not None:
-            if bd.get("date") is None or bd.get("time") is None:
-                raise serializers.ValidationError(
-                    "For blood donation provide start_date and start_time "
-                    "(or date/time in blood_donation_data)."
-                )
+
         return attrs
 
     def create(self, validated):
         request = self.context.get("request")
-        bd_nested = validated.pop("blood_donation_data", None)
 
-        if bd_nested:
-            bd_nested["user"] = request.user
-            validated["blood_donation"] = BloodDonation.objects.create(**bd_nested)
 
         event = super().create(validated)
 
@@ -182,7 +158,7 @@ class EventSerializer(serializers.ModelSerializer):
             event.event_type = EventType.VACCINATION
             event.name = event.name or event.vaccination.title
         elif event.analysis_test_id:
-            event.event_type = EventType.ANALYSIS_TEST
+            event.event_type = EventType.ANALYSIS
             event.name = event.name or event.analysis_test.title
         elif event.medical_specialty_id:
             event.event_type = EventType.VISIT
