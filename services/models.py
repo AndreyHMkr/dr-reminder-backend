@@ -84,6 +84,7 @@ class Event(models.Model):
     start_time = models.TimeField()
     medical_specialty = models.ForeignKey("MedicalSpecialty", null=True, blank=True, on_delete=models.SET_NULL)
     vaccination = models.ForeignKey("Vaccination", null=True, blank=True, on_delete=models.SET_NULL)
+    analysis_package = models.ForeignKey("AnalysisPackage", null=True, blank=True, on_delete=models.SET_NULL)
     analysis_test = models.ForeignKey("AnalysisTest", null=True, blank=True, on_delete=models.SET_NULL)
     blood_donation = models.OneToOneField("BloodDonation", null=True, blank=True, on_delete=models.CASCADE, related_name="event", db_column="blood_donation_id",
 )
@@ -121,6 +122,9 @@ class Event(models.Model):
         elif self.vaccination:
             self.name = f"Vaccination against {self.vaccination.title}"
             self.event_type = EventType.VACCINATION
+        elif self.analysis_package:
+            self.name = f"Analysis package {self.analysis_package.title}"
+            self.event_type = EventType.ANALYSIS
         elif self.analysis_test:
             self.name = self.analysis_test.title
             self.event_type = EventType.ANALYSIS

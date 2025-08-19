@@ -83,33 +83,23 @@ class EventSerializer(serializers.ModelSerializer):
     service = ServiceSerializer(read_only=True)
     medical_specialty = MedicalSpecialtySerializer(read_only=True)
     vaccination = VaccinationSerializer(read_only=True)
+    analysis_package = AnalysisPackageSerializer(read_only=True)
     analysis_test = AnalysisTestSerializer(read_only=True)
     blood_donation = BloodDonationSerializer(read_only=True)
 
-    service_id = serializers.PrimaryKeyRelatedField(
-        source="service", queryset=Service.objects.all(),
-        write_only=True, required=False, allow_null=True, label="Service id"
-    )
-    medical_specialty_id = serializers.PrimaryKeyRelatedField(
-        source="medical_specialty", queryset=MedicalSpecialty.objects.all(),
-        write_only=True, required=False, allow_null=True, label="Medical specialty id"
-    )
-    vaccination_id = serializers.PrimaryKeyRelatedField(
-        source="vaccination", queryset=Vaccination.objects.all(),
-        write_only=True, required=False, allow_null=True, label="Vaccination id"
-    )
-    analysis_test_id = serializers.PrimaryKeyRelatedField(
-        source="analysis_test", queryset=AnalysisTest.objects.all(),
-        write_only=True, required=False, allow_null=True, label="Analysis test id"
-    )
-
-    blood_donation_id = serializers.PrimaryKeyRelatedField(
-        source="blood_donation",
-        queryset=BloodDonation.objects.all(),
-        write_only=True, required=False, allow_null=True,
-        label="Blood donation id"
-    )
-
+    # write-only id-шники
+    service_id = serializers.PrimaryKeyRelatedField(source="service", queryset=Service.objects.all(),
+                                                    write_only=True, required=False, allow_null=True)
+    medical_specialty_id = serializers.PrimaryKeyRelatedField(source="medical_specialty", queryset=MedicalSpecialty.objects.all(),
+                                                              write_only=True, required=False, allow_null=True)
+    vaccination_id = serializers.PrimaryKeyRelatedField(source="vaccination", queryset=Vaccination.objects.all(),
+                                                        write_only=True, required=False, allow_null=True)
+    analysis_package_id = serializers.PrimaryKeyRelatedField(source="analysis_package", queryset=AnalysisPackage.objects.all(),
+                                                             write_only=True, required=False, allow_null=True)
+    analysis_test_id = serializers.PrimaryKeyRelatedField(source="analysis_test", queryset=AnalysisTest.objects.all(),
+                                                          write_only=True, required=False, allow_null=True)
+    blood_donation_id = serializers.PrimaryKeyRelatedField(source="blood_donation", queryset=BloodDonation.objects.all(),
+                                                           write_only=True, required=False, allow_null=True)
     event_type = serializers.ChoiceField(choices=EventType.choices, read_only=True)
 
     class Meta:
@@ -121,55 +111,20 @@ class EventSerializer(serializers.ModelSerializer):
             "medical_specialty", "medical_specialty_id",
             "vaccination", "vaccination_id",
             "analysis_test", "analysis_test_id",
+            "analysis_package", "analysis_package_id",
             "blood_donation", "blood_donation_id",
-
             "event_type", "created_at",
         )
         read_only_fields = ("id", "name", "event_type", "created_at")
 
     def validate(self, attrs):
-
-        picked = sum(1 for k in ("medical_specialty", "vaccination", "analysis_test", "service", "blood_donation")
+        picked = sum(1 for k in ("medical_specialty","vaccination","analysis_package","analysis_test","service","blood_donation")
                      if attrs.get(k))
-
         if picked > 1:
-            raise serializers.ValidationError(
-                "Pick only one of: medical_specialty_id, vaccination_id, analysis_test_id, "
-                "service_id, blood_donation_id / donation_center / blood_donation_data."
-            )
+            raise serializers.ValidationError("Pick only ONE related field.")
         if picked == 0:
-            raise serializers.ValidationError(
-                "You must provide one related field (service or specialty/vaccination/analysis_test or blood_donation)."
-            )
-
-
+            raise serializers.ValidationError("Provide exactly ONE related field.")
         return attrs
-
-    def create(self, validated):
-        request = self.context.get("request")
-
-
-        event = super().create(validated)
-
-        if event.blood_donation_id:
-            event.event_type = EventType.BLOOD_DONATION
-            event.name = event.name or "Blood donation"
-        elif event.vaccination_id:
-            event.event_type = EventType.VACCINATION
-            event.name = event.name or event.vaccination.title
-        elif event.analysis_test_id:
-            event.event_type = EventType.ANALYSIS
-            event.name = event.name or event.analysis_test.title
-        elif event.medical_specialty_id:
-            event.event_type = EventType.VISIT
-            event.name = event.name or f"Visit to {event.medical_specialty.title}"
-        elif event.service_id:
-            event.event_type = EventType.OTHER
-            event.name = event.name or event.service.title
-
-        event.save(update_fields=["event_type", "name"])
-        return event
-
 
 class EventRetrySerializer(serializers.ModelSerializer):
     service = ServiceSerializer(read_only=True)
