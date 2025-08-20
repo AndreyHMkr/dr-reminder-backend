@@ -15,6 +15,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path, include
+
+from accounts.views import MeSettingsView, ChangePasswordView, DeleteAccountView
 from dr_reminder_api import settings
 import debug_toolbar
 from django.conf.urls.static import static
@@ -28,11 +30,13 @@ def root_view(request):
 
 urlpatterns = [
                   path("api/services/", include("services.urls")),
-
                   path('', root_view),
                   path("__debug__/", include(debug_toolbar.urls)),
                   path("api/telegram/", include("telegram_notifications.urls")),
                   path("api/accounts/", include("accounts.urls")),
                   path("__debug__/", include(debug_toolbar.urls)),
+                  path("api/me/settings/", MeSettingsView.as_view(), name="me-settings"),  # GET/PUT/PATCH
+                  path("api/me/change-password/", ChangePasswordView.as_view(), name="change-pass"),  # POST
+                  path("api/me/delete-account/", DeleteAccountView.as_view(), name="delete-account")  # POST
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

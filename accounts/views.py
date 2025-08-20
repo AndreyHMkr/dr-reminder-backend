@@ -1,17 +1,19 @@
 from rest_framework import generics, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
+from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.parsers import MultiPartParser, FormParser
-from accounts.models import UserProfile, HealthIndicators, MedicalDocument
+from accounts.models import UserProfile, HealthIndicators, MedicalDocument, UserSettings
 from rest_framework import viewsets
 
 from accounts.serializers import UserSerializer, ResetPasswordSerializer, ResetPasswordConfirmSerializer, \
-    UserProfileSerializer, HealthIndicatorsSerializer, MedicalDocumentSerializer, MedicalDocumentBulkUploadSerializer
+    UserProfileSerializer, HealthIndicatorsSerializer, MedicalDocumentSerializer, MedicalDocumentBulkUploadSerializer, \
+    DeleteAccountSerializer, ChangePasswordSerializer, UserSettingsSerializer
 from services.models import BloodDonation, DonationCenter, Event
 from services.serializers import BloodDonationSerializer, DonationCenterSerializer
 
@@ -164,3 +166,32 @@ class BloodDonationView(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         Event.objects.filter(blood_donation=instance).delete()
         super().perform_destroy(instance)
+
+
+class MeSettingsView(RetrieveUpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSettingsSerializer
+
+    def get_object(self):
+        return UserSettings.objects.get_or_create(user=self.request.user)[0]
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        ser = ChangePasswordSerializer(data=request.data, context={"request": request})
+        ser.is_valid(raise_exception=True)
+        ser.save()
+        return Response({"detail": "Password updated."}, status=status.HTTP_200_OK)
+
+class DeleteAccountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        ser = DeleteAccountSerializer(data=request.data, context={"request": request})
+        ser.is_valid(raise_exception=True)
+
+
+        request.user.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

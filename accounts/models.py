@@ -5,6 +5,50 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.contrib.auth.models import BaseUserManager
 from django.template.defaultfilters import slugify
+from django.conf import settings
+
+
+class UserSettings(models.Model):
+    class Visibility(models.TextChoices):
+        PUBLIC = "public", "Public"
+        PRIVATE = "private", "Private"
+        PROVIDERS_ONLY = "providers_only", "Healthcare providers only"
+
+    class Units(models.TextChoices):
+        METRIC = "metric", "Metric (kg, °C)"
+        IMPERIAL = "imperial", "Imperial (lbs, °F)"
+
+    class DataFormat(models.TextChoices):
+        MDY = "MM/DD/YYYY", "MM/DD/YYYY"
+        DMY = "DD/MM/YYYY", "DD/MM/YYYY"
+        ISO = "YYYY-MM-DD", "YYYY-MM-DD"
+
+    class TimeZones(models.TextChoices):
+        AMERICA_NEW_YORK   = "America/New_York",   "Eastern Time"
+        AMERICA_CHICAGO    = "America/Chicago",    "Central Time"
+        AMERICA_DENVER     = "America/Denver",     "Mountain Time"
+        AMERICA_LOS_ANGELES= "America/Los_Angeles","Pacific Time"
+        EUROPE_KYIV        = "Europe/Kyiv",        "Eastern European Time"
+        EUROPE_DUBLIN      = "Europe/Dublin",      "Ireland (Dublin)"
+
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="settings")
+    profile_visibility = models.CharField(max_length=32, choices=Visibility.choices, default=Visibility.PRIVATE)
+    email_notifications = models.BooleanField(default=True)
+    push_notifications = models.BooleanField(default=True)
+    sms_notifications = models.BooleanField(default=False)
+    appointment_notifications = models.BooleanField(default=True)
+    medication_reminders = models.BooleanField(default=True)
+
+    two_factor_enabled = models.BooleanField(default=False)
+
+    timezone = models.CharField(max_length=64, choices=TimeZones.choices, default=TimeZones.EUROPE_KYIV)
+    date_format = models.CharField(max_length=16, choices=DataFormat.choices, default=DataFormat.ISO)
+    units = models.CharField(max_length=16, choices=Units.choices, default=Units.METRIC)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Settings({self.user_id})"
 
 
 class UserManager(BaseUserManager):
@@ -80,6 +124,7 @@ class UserProfile(models.Model):
         verbose_name = "User Profile"
         verbose_name_plural = "User Profiles"
 
+
 class HealthIndicators(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     pulse = models.PositiveSmallIntegerField(
@@ -91,7 +136,7 @@ class HealthIndicators(models.Model):
         help_text="Blood pressure"
 
     )
-    temperature = models.FloatField (
+    temperature = models.FloatField(
         validators=[MinValueValidator(30), MaxValueValidator(45)],
         help_text="Body temperature in 36.6°C"
     )
@@ -107,9 +152,11 @@ class HealthIndicators(models.Model):
     def __str__(self):
         return f"Health Indicator for {self.user}"
 
+
 def doc_upload_path(instance, filename):
     # /medical_documents/<user_id>/<filename>
     return f"medical_documents/{instance.user_id}/{filename}"
+
 
 class MedicalDocument(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

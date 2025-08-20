@@ -4,11 +4,11 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from jwt.utils import force_bytes
+from django.utils.encoding import force_bytes
 from rest_framework import serializers
 
-from accounts.models import UserProfile, HealthIndicators, MedicalDocument
-from dr_reminder_api import settings
+from accounts.models import UserProfile, HealthIndicators, MedicalDocument, UserSettings
+from django.conf import settings
 from services.utils.recommendations import generate_recommendations
 
 
@@ -61,9 +61,12 @@ class UserSerializer(serializers.ModelSerializer):
         return email
 
     def validate(self, attrs):
-        if attrs["password"] != attrs["repeat_password"]:
-            raise serializers.ValidationError("Passwords don't match")
-        validate_password_complexity(attrs["password"])
+        password = attrs.get("password")
+        repeat = attrs.get("repeat_password")
+        if password is not None or repeat is not None:
+            if password != repeat:
+                raise serializers.ValidationError("Passwords don't match")
+            validate_password_complexity(password)
         return attrs
 
     def create(self, validated_data):
@@ -72,21 +75,21 @@ class UserSerializer(serializers.ModelSerializer):
         return get_user_model().objects.create_user(**validated_data)
 
     def update(self, instance, validated_data):
-        """Update a user, set the password correctly and return it"""
+        validated_data.pop("repeat_password", None)
         password = validated_data.pop("password", None)
         user = super().update(instance, validated_data)
         if password:
             user.set_password(password)
             user.save()
-
         return user
+
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
     image_profile = serializers.ImageField(required=False, allow_null=True)
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     username = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    email = serializers.EmailField(read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
 
     class Meta:
         model = UserProfile
@@ -102,9 +105,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "image_profile"
         )
 
-    extra_kwargs = {
-        "user": {"write_only": True},
-    }
 
 
 class MedicalDocumentSerializer(serializers.ModelSerializer):
@@ -139,7 +139,7 @@ class MedicalDocumentBulkUploadSerializer(serializers.Serializer):
     def create(self, validated_data):
         user = self.context["request"].user
         docs = []
-        for file in validated_data["files"]:
+        for file in validated_data["file"]:
             title = os.path.splitext(file.name)[0]
             base, idx = title, 1
             while MedicalDocument.objects.filter(user=user, title=title).exists():
@@ -153,15 +153,13 @@ class ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
     def validate_email(self, value):
-        user = get_user_model().objects.filter(email=value).first()
-        if not user:
-            raise serializers.ValidationError("There is no user with this email.")
+        user = get_user_model().objects.filter(email__iexact=value).first()
         self.context["user"] = user
         return value
 
     def save(self, request=None):
         user = self.context.get("user")
-        uid = urlsafe_base64_encode(force_bytes(str(user.pk)))
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
         FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
         CONFIRM_PATH = "/reset-password-confirm/"
@@ -232,3 +230,50 @@ class HealthIndicatorsSerializer(serializers.ModelSerializer):
             "height": obj.height,
         }
         return generate_recommendations(data)
+
+
+class UserSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserSettings
+        fields = (
+            "profile_visibility",
+            "email_notifications", "push_notifications",
+            "sms_notifications", "appointment_notifications",
+            "medication_reminders", "timezone", "date_format",
+            "units", "two_factor_enabled",
+        )
+        read_only_fields = ("two_factor_enabled",)
+
+    def validate_timezone(self, value):
+        if not value or len(value) > 64:
+            raise serializers.ValidationError("Invalid timezone.")
+        return value
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(min_length=8, max_length=30, write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+        if not user.check_password(attrs["current_password"]):
+            raise serializers.ValidationError({"current_password": "Wrong password."})
+        if attrs["new_password"] != attrs["confirm_password"]:
+            raise serializers.ValidationError({"confirm_password": "Passwords must match."})
+        validate_password_complexity(attrs["new_password"])
+        return attrs
+
+    def save(self, **kwargs):
+        user = self.context["request"].user
+        user.set_password(self.validated_data["new_password"])
+        user.save()
+        return user
+
+class DeleteAccountSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+        if not user.check_password(attrs["password"]):
+            raise serializers.ValidationError({"password": "Wrong password."})
+        return attrs
