@@ -11,6 +11,23 @@ from accounts.models import UserProfile, HealthIndicators, MedicalDocument, User
 from django.conf import settings
 from services.utils.recommendations import generate_recommendations
 
+import logging
+from django.core.mail import get_connection
+from django.utils.encoding import force_str
+
+from django.core.mail import send_mail, get_connection
+from django.conf import settings
+import logging
+log = logging.getLogger(__name__)
+
+def _email_connection_or_console():
+    backend = getattr(settings, "EMAIL_BACKEND", None) or "django.core.mail.backends.console.EmailBackend"
+    try:
+        return get_connection(backend=backend, fail_silently=False)
+    except Exception:
+        log.exception("Cannot init email backend: %r", backend)
+        return None
+
 
 def validate_password_complexity(password: str) -> str:
     if not any(char.isupper() for char in password):
@@ -153,28 +170,44 @@ class ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
     def validate_email(self, value):
-        user = get_user_model().objects.filter(email__iexact=value).first()
-        self.context["user"] = user
+        User = get_user_model()
+        field = getattr(User, "EMAIL_FIELD", "email")
+        user = (User._default_manager
+                .filter(**{f"{field}__iexact": value.strip()})
+                .order_by("id")
+                .first())
+        self.context["user"] = user  # может быть None — ок
         return value
 
     def save(self, request=None):
         user = self.context.get("user")
+        if not user:
+            return None  # всегда 200 во вью — не палим существование аккаунта
+
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
-        CONFIRM_PATH = "/reset-password-confirm/"
-        base = FRONTEND_URL.rstrip("/")
-        path = CONFIRM_PATH if CONFIRM_PATH.startswith("/") else f"/{CONFIRM_PATH}"
-        reset_url = f"{base}{path}?uid={uid}&token={token}"
 
-        from_email = f"{settings.SITE_NAME} <{settings.DEFAULT_FROM_EMAIL}>"
+        FRONTEND_URL = os.getenv("FRONTEND_URL", "https://vovanchu.github.io/Welltrack").rstrip("/")
+        CONFIRM_PATH = "/#/reset-password-confirm"
+        reset_url = f"{FRONTEND_URL}{CONFIRM_PATH}?uid={uid}&token={token}"
 
-        send_mail(
-            subject="Reset your password",
-            message=f"Click the link to reset your password: {reset_url}",
-            from_email=from_email,
-            recipient_list=[user.email],
-        )
+        # создаём подключение и 'from' тут, а не глобально
+        conn = _email_connection_or_console()
+        from_email = f"{getattr(settings,'SITE_NAME','App')} <{getattr(settings,'DEFAULT_FROM_EMAIL','webmaster@localhost')}>"
+
+        try:
+            if conn:
+                send_mail(
+                    subject="Reset your password",
+                    message=f"Click the link to reset your password: {reset_url}",
+                    from_email=from_email,
+                    recipient_list=[getattr(user, getattr(user.__class__, "EMAIL_FIELD", "email"))],
+                    connection=conn,
+                    fail_silently=False,
+                )
+        except Exception:
+            log.exception("Password reset email sending failed")
+        return None
 
 
 class ResetPasswordConfirmSerializer(serializers.Serializer):
@@ -186,23 +219,27 @@ class ResetPasswordConfirmSerializer(serializers.Serializer):
     def validate(self, attrs):
         if attrs["new_password"] != attrs["repeat_password"]:
             raise serializers.ValidationError("Password and repeat password must match.")
+        # Стандартные валидаторы Django + твоя сложность
+        from django.contrib.auth.password_validation import validate_password
+        validate_password(attrs["new_password"])
         validate_password_complexity(attrs["new_password"])
         return attrs
 
     def save(self):
+        # Аккуратно декодируем uid
         try:
-            uid = urlsafe_base64_decode(self.validated_data["uid"]).decode()
+            uid = force_str(urlsafe_base64_decode(self.validated_data["uid"]))
             user = get_user_model().objects.get(pk=uid)
-        except (TypeError, ValueError, OverflowError, get_user_model().DoesNotExist):
+        except Exception:
             raise serializers.ValidationError("User with this ID does not exist.")
 
         token = self.validated_data["token"]
         if not default_token_generator.check_token(user, token):
             raise serializers.ValidationError("Invalid or expired token")
+
         user.set_password(self.validated_data["new_password"])
         user.save()
         return user
-
 
 class HealthIndicatorsSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())

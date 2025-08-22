@@ -123,6 +123,11 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.FormParser",
+        "rest_framework.parsers.MultiPartParser",
+    ],
 }
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
@@ -132,15 +137,25 @@ SIMPLE_JWT = {
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
 }
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND')
-EMAIL_HOST = os.getenv('EMAIL_HOST')
-EMAIL_PORT = os.getenv('EMAIL_PORT')
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS')
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-SITE_NAME = os.getenv("SITE_NAME", "Your App")
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+def _env(name, default=None):
+    v = os.environ.get(name)
+    return v if v not in (None, "", "None", "null") else default
 
+def _env_bool(name, default=False):
+    return str(os.environ.get(name, str(int(default)))).lower() in {"1","true","yes","on"}
+
+def _env_int(name, default):
+    try: return int(os.environ.get(name, default))
+    except: return default
+
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))          # int!
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() in {"1","true","yes","on"}  # bool!
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
+SITE_NAME = os.getenv("SITE_NAME", "Your App")
 INTERNAL_IPS = [
     "127.0.0.1",
 ]

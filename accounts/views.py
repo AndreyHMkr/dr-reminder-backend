@@ -1,4 +1,4 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, parsers
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import RetrieveUpdateAPIView
@@ -92,27 +92,30 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class ResetPasswordView(generics.GenericAPIView):
-    serializer_class = ResetPasswordSerializer
     permission_classes = [AllowAny]
+    serializer_class = ResetPasswordSerializer
+    parser_classes = [parsers.JSONParser, parsers.FormParser, parsers.MultiPartParser]
 
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(request=request)
+        ser = self.get_serializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        ser.save(request=request)
+        from rest_framework.response import Response
+        from rest_framework import status
         return Response({"detail": "Password reset email sent."}, status=status.HTTP_200_OK)
 
-
 class ResetPasswordConfirmView(generics.GenericAPIView):
-    serializer_class = ResetPasswordConfirmSerializer
     permission_classes = [AllowAny]
+    serializer_class = ResetPasswordConfirmSerializer
+    parser_classes = [parsers.JSONParser, parsers.FormParser, parsers.MultiPartParser]
 
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        ser = self.get_serializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        ser.save()
+        from rest_framework.response import Response
+        from rest_framework import status
         return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)
-
-
 class HealthIndicatorsView(viewsets.ModelViewSet):
     serializer_class = HealthIndicatorsSerializer
     permission_classes = [IsAuthenticated]
@@ -175,6 +178,7 @@ class MeSettingsView(RetrieveUpdateAPIView):
     def get_object(self):
         return UserSettings.objects.get_or_create(user=self.request.user)[0]
 
+
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -184,13 +188,13 @@ class ChangePasswordView(APIView):
         ser.save()
         return Response({"detail": "Password updated."}, status=status.HTTP_200_OK)
 
+
 class DeleteAccountView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         ser = DeleteAccountSerializer(data=request.data, context={"request": request})
         ser.is_valid(raise_exception=True)
-
 
         request.user.delete()
 
