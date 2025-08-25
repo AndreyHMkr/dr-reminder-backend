@@ -36,7 +36,8 @@ class LogoutView(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
+class UserProfileView(generics.RetrieveUpdateDestroyAPIView,
+                      generics.CreateAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
     queryset = UserProfile.objects.all()
