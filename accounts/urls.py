@@ -8,7 +8,7 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView,
 )
 from accounts.views import CreateUserView, ResetPasswordView, ResetPasswordConfirmView, UserProfileView, LogoutView, \
-    UserDetailView, HealthIndicatorsView, UserPhotoView, MedicalDocumentViewSet
+    UserDetailView, HealthIndicatorsView, UserPhotoView, MedicalDocumentViewSet, ChangeLoginView
 
 
 def accounts_root(request):
@@ -23,6 +23,8 @@ urlpatterns = [
                   path("", accounts_root),
                   path("register/", CreateUserView.as_view(), name="register"),
                   path("login/", TokenObtainPairView.as_view(), name="login"),
+                  path("change-login/", ChangeLoginView.as_view(), name="change-login"),
+
                   path("logout/", LogoutView.as_view(), name="logout"),
                   path("profile/", UserProfileView.as_view(), name="profile"),
                   path("me/", UserDetailView.as_view(), name="me"),

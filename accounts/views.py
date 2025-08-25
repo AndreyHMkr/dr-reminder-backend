@@ -10,7 +10,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.parsers import MultiPartParser, FormParser
 from accounts.models import UserProfile, HealthIndicators, MedicalDocument, UserSettings
 from rest_framework import viewsets
-
+from django.contrib.auth import get_user_model
 from accounts.serializers import UserSerializer, ResetPasswordSerializer, ResetPasswordConfirmSerializer, \
     UserProfileSerializer, HealthIndicatorsSerializer, MedicalDocumentSerializer, MedicalDocumentBulkUploadSerializer, \
     DeleteAccountSerializer, ChangePasswordSerializer, UserSettingsSerializer
@@ -199,3 +199,23 @@ class DeleteAccountView(APIView):
         request.user.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+
+class ChangeLoginView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        User = get_user_model()
+        new_email = request.data.get("email")
+        if not new_email:
+            return Response({"detail": "New email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(email=new_email).exists():
+            return Response({"detail": "This email is already taken."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        user.email = new_email
+        user.save(update_fields=["email"])
+        return Response({"detail": "Login (email) updated successfully"}, status=status.HTTP_200_OK)
