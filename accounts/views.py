@@ -36,10 +36,23 @@ class LogoutView(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserProfileView(generics.CreateAPIView):
+class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
     queryset = UserProfile.objects.all()
+
+    def get_object(self):
+        user = self.request.user
+        try:
+            return user.userprofile
+        except UserProfile.DoesNotExist:
+            raise NotFound("User profile does not exist.")
+
+    def destroy(self, request, *args, **kwargs):
+        user = request.user
+        user.delete()
+        return Response({"detail": "Your account has been deleted."}, status=status.HTTP_204_NO_CONTENT)
+
 
 
 class UserPhotoView(APIView):

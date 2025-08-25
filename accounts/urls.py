@@ -24,7 +24,6 @@ urlpatterns = [
                   path("register/", CreateUserView.as_view(), name="register"),
                   path("login/", TokenObtainPairView.as_view(), name="login"),
                   path("change-login/", ChangeLoginView.as_view(), name="change-login"),
-
                   path("logout/", LogoutView.as_view(), name="logout"),
                   path("profile/", UserProfileView.as_view(), name="profile"),
                   path("me/", UserDetailView.as_view(), name="me"),
