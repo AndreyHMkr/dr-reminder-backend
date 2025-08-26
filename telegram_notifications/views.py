@@ -1,62 +1,73 @@
-from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
-
-from telegram_notifications.models import TelegramAccount
-
-
-# class SaveChatIdView(APIView):
-#     permission_classes = (IsAuthenticated,)
-#
-#     def post(self, request, *args, **kwargs):
-#         chat_id = request.data.get("chat_id")
-#         if not chat_id:
-#             return Response({"detail": "chat_id is required"}, status=400)
-#         acc, _ = TelegramAccount.objects.update_or_create(
-#             user=request.user,
-#             defaults={"chat_id": str(chat_id), "is_active": True},
-#         )
-#         return Response({"chat_id": acc.chat_id}, status=status.HTTP_200_OK)
-
-
-# telegram_notifications/views.py
-# telegram_notifications/views.py
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
+from django.core import signing
+
 from .models import TelegramAccount
+from .utils import make_link_token, verify_link_token
 
 User = get_user_model()
 
-# telegram_notifications/views.py
 
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
-from django.contrib.auth import get_user_model
-from .models import TelegramAccount
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_link_token(request):
+    token = make_link_token(request.user.id)
+    return Response({"token": token})
 
-User = get_user_model()
 
-@api_view(['POST'])
-def link_telegram_account(request):
-    email = request.data.get('email')
-    chat_id = request.data.get('chat_id')
+@api_view(["POST"])
+def link_by_token(request):
+    token = request.data.get("token")
+    chat_id = request.data.get("chat_id")
 
-    if not email or not chat_id:
-        return Response({'detail': 'Email and chat_id are required.'}, status=status.HTTP_400_BAD_REQUEST)
+    if not token or not chat_id:
+        return Response({"detail": "token и chat_id обязательны"}, status=400)
 
     try:
-        user = User.objects.get(email=email)
-    except User.DoesNotExist:
-        return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+        user_id = verify_link_token(token)
+    except signing.BadSignature:
+        return Response({"detail": "Неверный или просроченный токен"}, status=400)
 
+    user = User.objects.get(id=user_id)
     TelegramAccount.objects.update_or_create(
         user=user,
         defaults={"chat_id": chat_id, "is_active": True}
     )
+    return Response({"detail": "Telegram успешно привязан"})
 
-    return Response({'detail': 'Telegram account linked successfully.'})
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def me_status(request):
+    acc = getattr(request.user, "telegram", None)
+    if not acc:
+        return Response({"linked": False})
+    return Response({
+        "linked": True,
+        "chat_id": acc.chat_id,
+        "is_active": acc.is_active,
+        "linked_at": acc.linked_at
+    })
+
+
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def toggle_active(request):
+    acc = getattr(request.user, "telegram", None)
+    if not acc:
+        return Response({"detail": "Не привязан"}, status=404)
+    acc.is_active = bool(request.data.get("is_active"))
+    acc.save(update_fields=["is_active"])
+    return Response({"is_active": acc.is_active})
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def unlink(request):
+    acc = getattr(request.user, "telegram", None)
+    if acc:
+        acc.delete()
+    return Response(status=204)
