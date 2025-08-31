@@ -7,7 +7,10 @@ LOGGING = {
   "handlers": {"console": {"class": "logging.StreamHandler"}},
   "loggers": {"django.request": {"handlers": ["console"], "level": "ERROR"}},
 }
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = os.getenv(
+    "ALLOWED_HOSTS",
+    "localhost,127.0.0.1,0.0.0.0,web"
+).split(",")
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8002",
     "http://127.0.0.1:8002",

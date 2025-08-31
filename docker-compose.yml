@@ -50,6 +50,19 @@ services:
     depends_on:
       - redis
       - db
+  bot:
+    build: .
+    command: python -u -m telegram_notifications.bot
+    working_dir: /app
+    volumes:
+      - ./:/app
+    env_file: .env
+    environment:
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN}"
+      API_URL: "http://web:8000/api/telegram/link/"
+    depends_on: [ web ]
+    restart: unless-stopped
+
 
 volumes:
   my_db:

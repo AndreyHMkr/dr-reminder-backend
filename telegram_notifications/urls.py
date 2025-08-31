@@ -1,10 +1,11 @@
 from django.urls import path
-from .views import create_link_token, link_by_token, me_status, toggle_active, unlink
+from . import views
+
 
 urlpatterns = [
-    path("link-token/", create_link_token),  # фронт генерит токен
-    path("link/", link_by_token),            # бот связывает
-    path("status/", me_status),
-    path("toggle/", toggle_active),          # PATCH {is_active: true/false}
-    path("unlink/", unlink),                 # DELETE
+    path("link-token/", views.create_link_token, name="create_link_token"),
+    path("link/",       views.link_by_token,     name="link_by_token"),
+    path("status/",     views.me_status,         name="me_status"),
+    path("toggle/", views.toggle_active, name="toggle_active"),
+
 ]
